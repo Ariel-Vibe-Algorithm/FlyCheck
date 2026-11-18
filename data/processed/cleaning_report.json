@@ -1,0 +1,47 @@
+{
+  "sources": {
+    "odata": {
+      "rows": 225500,
+      "malformed_lines_skipped": 3
+    },
+    "govil": {
+      "files": 1,
+      "rows": 1827
+    }
+  },
+  "malformed_lines_skipped": 3,
+  "raw_rows": 227327,
+  "rows_with_valid_keys": 227327,
+  "unique_flight_listings": 7507,
+  "physical_flights": 5213,
+  "departures": 2595,
+  "departures_completed": 931,
+  "departures_cancelled": 27,
+  "departures_unresolved": 1637,
+  "completed_domestic_excluded": 41,
+  "completed_suspect_early_excluded": 1,
+  "model_scope_departures": 889,
+  "flights_by_source": {
+    "odata": 4074,
+    "govil": 1139
+  },
+  "model_scope_summary": {
+    "n": 889,
+    "median_delay_min": 31.0,
+    "share_delayed_30": 0.5208,
+    "first_day": "2026-01-16",
+    "last_day": "2026-11-18",
+    "per_day": {
+      "2026-01-16": 11,
+      "2026-03-16": 8,
+      "2026-03-17": 30,
+      "2026-06-25": 228,
+      "2026-06-26": 12,
+      "2026-07-01": 2,
+      "2026-07-02": 247,
+      "2026-07-03": 196,
+      "2026-11-17": 13,
+      "2026-11-18": 142
+    }
+  }
+}

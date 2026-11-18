@@ -49,20 +49,64 @@ Based on the two supplied course presentations (meetings 1 and 2):
 - Overall grade: final project 50%, milestones 30% (10% each), demo 20%. Attendance, all milestones and demo participation are passing conditions. Team roles: product, programmer, data, UI/UX. Team members and assignments are not yet specified.
 - An AI agent is a bonus, not a required milestone. Prefer a reliable, explainable MVP over additional complexity.
 
-## 4. Candidate data sources — verify before implementation
+## 4. Data sources: audit results (2026-11-18)
 
-| Source | URL | Intended use |
-|---|---|---|
-| Historical flydata archive (OData / The Octopus nonprofit) | https://www.odata.org.il/he/dataset/flydata | Primary candidate training and analytics data |
-| Candidate CSV download | https://www.odata.org.il/dataset/98b4f544-a7c8-4113-87de-7da1861c3a74/resource/d5ee74ca-2f56-4734-933e-02f4934420c2/download/flydata_log.csv | Download a fixed snapshot if available |
-| Israel Airports Authority flight board | https://data.gov.il/datasets/airport_authority/flydata | Reference schema; optional live integration, not required |
-| TLV Flights statistics | https://www.tlvflights.com/en/flight-statistics/?range=all | Reference/competitor research |
-| Busy TLV | https://busy-tlv.co.il/stats | Reference for congestion analytics |
-| Fly TLV | https://fly-tlv.com/airport-status?lang=he | Reference for congestion estimates |
+**Team decision:** use only existing datasets. No self-collected archive.
 
-These links and candidate schemas come from the planning discussion; the raw archive has NOT been downloaded or audited. Verify availability, license/redistribution rights, historical coverage, completeness, timestamp meaning and data quality before committing to the project. The official feed reportedly refreshes every 15 minutes; a refreshed flight board is not the same as a historical dataset. Do not assume that a changing estimated flight time is an observed actual departure.
+The openly available labelled data is small and comes from an unusual period. Larger sources are being requested (see "Pending larger sources" below), with a **decision point on 2026-12-01**. If no larger source has arrived by then, build the delay model on the small data as a transparent "relative risk" model, or move to US BTS data (needs instructor approval). Tell the instructor about this scope limitation.
 
-Candidate raw columns (confirm against actual schema): CHOPER airline code; CHOPERD airline name; CHFLTN flight number; CHSTOL scheduled time; CHPTOL updated/possibly actual time; CHAORD arrival/departure; CHLOC1 other airport; CHLOCCT country; CHTERM terminal; CHRMINH status. Inspect snapshot timestamps and status values, if present. Confirm local versus UTC time and handle Asia/Jerusalem daylight saving transitions.
+### Pending larger sources
+
+- **Rank Air** ([site](https://www.rank-air.com/), [code](https://github.com/Daniel1Maymon/israel-flights-etl)). It has polled the official data.gov.il board every 15 minutes, probably since August 2025, storing one row per flight with actual time and delay. That is the same source and time definition as the OData log. Its public API deliberately blocks bulk dumps, so **do not scrape it**; ask the developer for an academic export.
+- **EUROCONTROL Aviation Data Repository for Research (ADRR)** ([page](https://www.eurocontrol.int/dashboard/aviation-data-research)).
+  - **Coverage:** commercial flights "in and over Europe", 2015–2025, with filed and actual off-block times. About 76% of TLV departures go to Europe; LLBG inclusion is not yet verified.
+  - **Access:** free, research only, via OneSky with an academic email. The student is registering.
+  - **Terms (read 2026-11-18):** no sharing or public display of the raw data; credit EUROCONTROL with the Article 6 legend. Whether a public app may show aggregates and predictions is being asked in the request.
+  - **Caveat:** filed off-block time may be updated by delay messages, which would understate delay. Verify once the data arrives.
+- **Other options:**
+  - TLVFlights full data (request).
+  - IAA freedom-of-information request (30+ days).
+  - AeroDataBox (paid; its terms forbid permanent storage).
+  - FlightAware (minimum $100/month).
+  - Wayback Machine captures (checked; too sparse).
+- **US fallback:**
+  - BTS On-Time Performance (US domestic only, millions of flights, delay causes).
+  - TSA hourly checkpoint throughput PDFs (not verified).
+  - DB1B fares.
+
+### Datasets
+
+| Source | Status | What it gives | License / terms | Use |
+|---|---|---|---|---|
+| OData flydata log ([page](https://www.odata.org.il/he/dataset/flydata), [CSV](https://www.odata.org.il/dataset/98b4f544-a7c8-4113-87de-7da1861c3a74/resource/d5ee74ca-2f56-4734-933e-02f4934420c2/download/flydata_log.csv)) | Downloaded and audited | Board snapshots logged on only 4 days (2026-01-17, 03-17, 06-26, 07-03). Of 2,844 departure records (about 2,030 physical flights after codeshare dedup), the final status is 761 DEPARTED, 25 CANCELED and 1,238 unresolved. | CC BY. The page calls it an "experiment"; it stopped updating 2026-07-04 | **Primary training and analytics data** |
+| data.gov.il live flight board, resource `e83f763b-b7d7-479e-b172-ae981ddc6de5`, via `https://data.gov.il/api/3/action/datastore_search?resource_id=...` | API verified working | Current board only: about 24 h back to 3–4 days ahead, about 1,800 rows (arrivals and departures), same schema | "Other (Open)" | A one-time snapshot for recent schedule density; an optional live-status card. **Not a historical archive** |
+| [giladct/flights-delays](https://github.com/giladct/flights-delays) `tlv_flights.db` | Downloaded and profiled | 4,827 departures scheduled 2026-04-30 to 06-04; 2,345 have actual_out and delay_minutes. Comes from AeroDataBox; actual time is probably the gate time | **No license** | Do not use or commit unless the author grants permission. If permission comes, use it only as a separate external check, never merged into training (its time definition differs) |
+| [TLVFlights statistics](https://www.tlvflights.com/en/flight-statistics/?range=all) | Researched, not downloaded | About 101k flights (2025-12-10 to 2026-11-17, excluding 2026-02-11 to 05-15). The CSV export is **airline-level aggregates only** | Site says free to use with a link | Airline reliability context in the dashboard; sanity check. Not for training |
+| CBS price index series 121390 "Expenditures for travel abroad and local flights" (`https://api.cbs.gov.il/index/data/price?id=121390&format=json&lang=en`) | API verified | Monthly national index since 1983 (base: 2024 average = 100) | Public | Seasonal fare **context only**, not a fare prediction |
+| Busy TLV, Fly TLV | Reference only | Estimated congestion. Fly TLV counts departures in the next 3 h; no measured queue times | — | Competitor reference |
+
+**Not available:**
+
+- Per-flight fare history. Amadeus Self-Service shut down on 2026-07-17; Kiwi and Skyscanner are partner-only.
+- Security queue or wait-time data.
+- Hourly passenger counts.
+- Any large per-flight TLV archive on Kaggle or Hugging Face.
+
+### Verified flydata schema and quirks
+
+Columns: `_id, CHOPER, CHFLTN, CHOPERD, CHSTOL, CHPTOL, CHAORD, CHLOC1, CHLOC1D, CHLOC1TH, CHLOC1T, CHLOC1CH, CHLOCCT, CHTERM, CHCINT, CHCKZN, CHRMINE, CHRMINH, log_timestamp, log_action`.
+
+- `CHAORD` is A (arrival) or D (departure).
+- `CHRMINE` statuses: ON TIME, NOT FINAL, LANDED, DEPARTED, FINAL, CANCELED, LANDING, DELAYED, EARLY.
+- `CHTERM` is 1 or 3. `CHCINT` (check-in counters) and `CHCKZN` (check-in zone) are "null" in 57% of rows.
+- The log holds about 225.5k rows, each a repeated snapshot (up to 86 per flight). It has at least one truncated, malformed line, so parse robustly.
+- Times are ISO strings without a timezone and appear to be Asia/Jerusalem local time. Spot-check this before relying on it.
+
+Context:
+
+- **Airport closure:** TLV was closed 2026-02-11 to 05-15 (wartime). All available data is from around this abnormal period, so seasonality cannot be learned.
+- **What "actual" means:** per TLVFlights, the IAA time is close to takeoff, not gate departure. State this as a limitation.
+- **Class balance:** in the OData sample, 56% of completed departures are delayed by 30 minutes or more (median delay 33 min). giladct shows 25%, likely because it uses a different time definition. Do not mix the two.
 
 ### Data cleaning and feasibility gate
 
@@ -77,7 +121,35 @@ Candidate raw columns (confirm against actual schema): CHOPER airline code; CHOP
 
 ### Delay prediction (required)
 
-Use a binary classifier for delayed_30. Features must be available before purchase or derived from historical patterns: airline, destination, scheduled hour, weekday, month, optional terminal and historical congestion estimate. Optional Israeli holiday indicator only if a reliable source is available. Do not use actual time, final status, realized flight counts or future records as features.
+Use a binary classifier for delayed_30. Features must be available before purchase or derived from historical patterns.
+
+**Candidate features**, each kept only if a chronological ablation shows it helps:
+
+- airline;
+- airline type (Israeli/foreign, low-cost/full-service), from a manual mapping;
+- destination region and distance (OurAirports);
+- scheduled hour and weekday;
+- Israeli holiday / holiday-eve flag (Python `holidays` package);
+- historical congestion estimate;
+- optional terminal;
+- optional scheduled turnaround gap.
+
+Month adds nothing with the current data, since the few covered days give no seasonal variation.
+
+**Excluded features:**
+
+- actual time, final status, realized flight counts, future records;
+- realized weather (not known at booking). Weather is display-only;
+- security events.
+
+**Not modelled:**
+
+- **Cancellations:** too rare (about 1–2%). Show historical rates only.
+- **Fares and queue times:** no data.
+
+**Data size:** with about 761 labelled departures, keep the model small (few features, shallow trees). Present predictions as relative risk from limited 2026 data.
+
+**Prediction horizon:** the historical model gives the same answer for any future date and has no live information. A real schedule exists only about 3–4 days ahead, on the live board; it may be displayed separately but must not be fed into the model.
 
 Start with a DummyClassifier or historical base-rate baseline and LogisticRegression; compare with RandomForestClassifier. Use a scikit-learn Pipeline with ColumnTransformer, categorical encoding (handle unknown categories) and numeric missing-value handling. Save the entire fitted pipeline, not just the classifier, with joblib; only load trusted locally generated artifacts.
 
@@ -109,7 +181,14 @@ Suggested Streamlit pages/tabs:
 - **Analyze a Flight:** input form, delay probability, congestion level, historical context and daily congestion chart.
 - **Compare Flights:** manually add/remove options and compare risk, congestion and optional prices; sortable table.
 - **Explore Data:** filters by airline, route, period and weekday; historical delay rates, delay distribution, airline/route sample sizes, hourly departures/arrivals and weekday/hour heatmap.
+- **Airport Guide (static, cosmetic):** official arrival guidance (3 h before international flights), terminals, train/bus links, parking prices, carry-on rules, lounges and accessibility. Each item links to IAA and shows a retrieval date.
 - **About & Model:** methodology, data attribution, coverage, evaluation metrics, limitations and training date.
+
+Optional extras, each clearly separated from the forecast:
+
+- a live-status card from the data.gov.il board, with terminal and check-in counters, labelled "current status — not a forecast";
+- Open-Meteo weather at TLV and the destination, up to 16 days ahead, display only, CC BY 4.0 attribution;
+- conversion of user-entered prices to ILS with Bank of Israel rates.
 
 Use a clean aviation-themed interface, readable labels and consistent units. English is the proposed implementation language; Hebrew localization is optional. Use numeric and text labels in addition to color. Provide clear empty/error states. Never show fake predictions in a production screen; any prototype sample data must be explicitly marked as illustrative.
 
@@ -156,11 +235,18 @@ Keep large raw files out of Git. Provide reproducible data download/preparation 
 
 ## 7. Delivery plan and acceptance criteria
 
-- [ ] Audit candidate archive and document feasibility, license, schema, coverage and actual-time reliability.
+The detailed step-by-step plan with dates is in [PLAN.md](PLAN.md). Keep both files in sync.
+
+- [x] Audit candidate archive and document feasibility, license, schema, coverage and actual-time reliability (2026-11-18; see section 4).
 - [ ] Create repository, initial README, app skeleton, UI sketch and M1 pitch; confirm team roles and detailed course rubric.
-- [ ] Implement and test cleaning, deduplication, timestamp handling and hourly historical aggregation.
-- [ ] Build M2 dashboard using real data and filters.
-- [ ] Train baseline and candidate delay models; evaluate chronologically; save pipeline and metadata.
+- [x] Implement and test cleaning, deduplication, timestamp handling and hourly historical aggregation (2026-11-18).
+- [x] Build M2 dashboard using real data and filters (2026-11-18: `app.py` + `app_pages/`, 22 tests passing; still to submit).
+- [x] Training/evaluation infrastructure for delay, cancellation and hourly activity (2026-11-18). Files: `src/sources.py`, `features.py`, `estimators.py`, `train.py`, `predict.py`.
+  - Chronological split, with the profile computed from training days only.
+  - Gate: a model is used only if the 95% paired-bootstrap Brier gain is above 0 AND its ROC-AUC beats the best baseline.
+  - Cancellation needs at least 50/10 positives in train/test before a model is trained.
+  - Current data: no model beats the airline-rate baseline. Rerun when larger data arrives (README "Adding a larger dataset").
+- [ ] Train delay models on the larger dataset when it arrives; report results honestly.
 - [ ] Implement congestion profile and integrate both outputs into the app.
 - [ ] Add comparison view and transparent limitations; handle missing/unsupported inputs.
 - [ ] Test end-to-end inference, midnight/date boundaries, unknown categories, cancellations, duplicated snapshots and absence of future information in features.
@@ -173,12 +259,36 @@ Definition of done: reproducible pipeline, real historical data, at least one ev
 
 Act as a senior Python/ML developer and teaching partner. Prioritize simplicity and adherence to the course rubric. Help the student understand the code and justify design decisions in the demo. Work in small, testable increments; inspect existing files before editing; do not overwrite student work or add dependencies unnecessarily. Explain important changes and run tests where possible. Never invent data, metrics, model predictions, source availability, or completed work. Keep README and this context aligned with verified findings. Ask only for genuinely blocking decisions; make reversible assumptions explicit.
 
-**First task:** audit the historical TLV dataset before designing the final model. Verify the candidate download, inspect schema and sample rows, determine whether completed flight events and actual departure times are recoverable, estimate usable unique flights and coverage, and report a go/no-go decision with specific evidence. Then propose the smallest working M1/M2 implementation. If the archive fails, identify viable alternatives and flag any scope change for approval. Do not start building a full application based on an unverified schema.
+**Work log (mandatory):** [WORKLOG.md](WORKLOG.md) is the project journal, written in Hebrew. Update it at the end of every work session and whenever a significant decision, finding or change of direction occurs. Keep these parts current:
+
+- the "מצב נוכחי" (current status) block;
+- the decisions table, with the reason and the rejected alternatives;
+- the open questions;
+- a dated entry at the top of the "יומן" (log) section.
+
+Record only verified facts, and mark uncertain items as such. Never put personal details (addresses, phone numbers, emails) in it. Keep CLAUDE.md, PLAN.md and WORKLOG.md consistent.
+
+**Data audit:** done on 2026-11-18 (section 4). **Next task:** follow [PLAN.md](PLAN.md) from Phase 0. Phase 0 sets up the repo, environment and reproducible download script; Phase 1 builds the data pipeline with tests. Do not build model or UI code ahead of the processed data.
 
 ## 9. Current status and open decisions
 
-- Confirmed product name: FlyCheck (for an academic project; commercial name/trademark availability is not established).
-- Confirmed features: flight delay prediction, estimated airport congestion at arrival, and historical analysis. Flight comparison is a planned feature from the discussion.
-- Proposed defaults, not verified results: TLV-only departures, 30-minute delay threshold, three-hour arrival lead time, static dataset, historical congestion proxy, and English UI.
-- No dataset downloaded/audited, model trained, accuracy established, code implemented, or deployment completed in this planning discussion.
-- Confirm team composition, instructor's full submission instructions, current milestone status, dataset license/schema/coverage, and whether the delay target can be constructed reliably.
+**Settled:**
+
+- **Product name:** FlyCheck (for an academic project; commercial name/trademark availability is not established).
+- **Features:** flight delay risk, estimated airport congestion at arrival, historical analysis, flight comparison, and an Airport Guide page.
+- **Data:** existing datasets only. OData flydata log (CC BY) is the primary source; TLVFlights aggregates and the CBS price index provide context. The delay target can be constructed (CHPTOL at final status DEPARTED), but only about 761 labelled departures exist.
+- **Defaults:** TLV-only departures, 30-minute delay threshold, 3-hour arrival lead time, static dataset, historical congestion proxy, English UI.
+
+**Not done yet:** code, git repository, model, deployment. Only the audit is complete. No accuracy has been established.
+
+**Open:**
+
+- Instructor approval of the small-data scope (and of the US fallback, if it comes to that).
+- Rank Air export request (not sent yet).
+- EUROCONTROL ADRR access (registration in progress).
+- Data decision point: 2026-12-01.
+- Permission from the giladct author.
+- Team composition and roles.
+- The official M2 rubric.
+- Whether M1 was submitted.
+- Timezone spot-check of CHSTOL.
