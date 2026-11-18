@@ -1,0 +1,20 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+.ipynb_checkpoints/
+
+# Data: raw downloads stay out of Git (see README for download instructions)
+data/raw/
+
+# Secrets / local config
+.env
+.streamlit/secrets.toml
+.claude/settings.local.json
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
