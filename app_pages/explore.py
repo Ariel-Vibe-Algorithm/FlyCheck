@@ -60,6 +60,43 @@ cancelled = int((departures["outcome"] == "cancelled").sum())
 resolved = int(departures["outcome"].isin(["completed", "cancelled"]).sum())
 k4.metric("Cancelled", f"{cancelled}", help=f"Out of {resolved} departures with a final status")
 
+# ---------------------------------------------------------------- story: insight + baseline (M2)
+def late_share(df: pd.DataFrame) -> float:
+    return float(df["delayed_30"].astype(float).mean())
+
+
+s_insight, s_baseline = st.columns(2)
+with s_insight.container(border=True):
+    st.markdown("**Insight: delays build up during the day**")
+    morning, evening = scope[scope["hour"] < 12], scope[scope["hour"] >= 18]
+    if len(morning) >= 20 and len(evening) >= 20:
+        st.markdown(f"Departures scheduled before noon left 30+ min late **{late_share(morning):.0%}** of "
+                    f"the time (n = {len(morning)}). After 18:00 it was **{late_share(evening):.0%}** "
+                    f"(n = {len(evening)}).")
+    else:
+        st.caption("Too few morning or evening departures with these filters to compare. Widen the filters.")
+    ly = scope_all[scope_all["airline_code"] == "LY"]
+    ly_m, ly_e = ly[ly["hour"] < 12], ly[ly["hour"] >= 18]
+    st.caption(f"It is not only the airline mix: El Al alone went from {late_share(ly_m):.0%} (n = {len(ly_m)}) "
+               f"to {late_share(ly_e):.0%} (n = {len(ly_e)}). For a traveler who cares about delays, a "
+               "morning flight is the safer bet.")
+
+with s_baseline.container(border=True):
+    st.markdown("**Baseline the M3 model must beat**")
+    metrics = C.load_metrics()
+    if metrics is None or "delay" not in metrics["tasks"]:
+        st.caption("Run `python -m src.train` to compute the baselines.")
+    else:
+        task = metrics["tasks"]["delay"]
+        best = task["best_baseline"]
+        r = task["results"][best]["test"]
+        overall = task["results"]["Overall rate"]["test"]
+        st.markdown(f"**{best}**: ROC-AUC **{r['roc_auc']:.2f}**, Brier **{r['brier']:.3f}** on the "
+                    f"{task['split']['test_rows']} latest departures (test days, never used for training).")
+        st.caption(f"The simplest baseline, the overall rate for every flight, scores Brier "
+                   f"{overall['brier']:.3f} and ROC-AUC 0.50. No model beats the airline rate yet; "
+                   "see the Baselines & models tab.")
+
 tab_delay, tab_groups, tab_activity, tab_context, tab_models, tab_data = st.tabs(
     ["Delays", "Airlines & destinations", "Airport activity", "Wider context",
      "Baselines & models", "Data table"])

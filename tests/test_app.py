@@ -27,6 +27,14 @@ def test_analyze_midnight_flight_shows_previous_evening():
     assert any("the evening before" in m.value for m in at.markdown)
 
 
+def test_explore_shows_insight_and_baseline():
+    at = AppTest.from_file(str(ROOT / "app_pages" / "explore.py"), default_timeout=60).run()
+    assert not at.exception
+    texts = [m.value for m in at.markdown]
+    assert any("delays build up during the day" in t for t in texts)
+    assert any("Baseline the M3 model must beat" in t for t in texts)
+
+
 def test_explore_empty_filter_shows_warning():
     at = AppTest.from_file(str(ROOT / "app_pages" / "explore.py"), default_timeout=60).run()
     # flydubai only flies to Dubai, so FZ + Greece matches nothing

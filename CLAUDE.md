@@ -240,7 +240,13 @@ The detailed step-by-step plan with dates is in [PLAN.md](PLAN.md). Keep both fi
 - [x] Audit candidate archive and document feasibility, license, schema, coverage and actual-time reliability (2026-11-18; see section 4).
 - [ ] Create repository, initial README, app skeleton, UI sketch and M1 pitch; confirm team roles and detailed course rubric.
 - [x] Implement and test cleaning, deduplication, timestamp handling and hourly historical aggregation (2026-11-18).
-- [x] Build M2 dashboard using real data and filters (2026-11-18: `app.py` + `app_pages/`, 22 tests passing; still to submit).
+- [x] Build M2 dashboard using real data and filters (2026-11-18: `app.py` + `app_pages/`).
+- [x] M2 deliverables prepared (2026-11-21):
+  - README: M2 summary table, Data Card (5 fields), "What we fixed and why", target histogram (`docs/img/target_histogram.png`), team table to fill.
+  - Explore page: insight ("delays build up during the day") and baseline cards.
+  - Pitch script and submission checklist: `docs/M2_pitch.md`.
+  - Clean-venv install verified; 34 tests passing.
+  - Still to do by the team: fill names, a commit from each member, push by 2026-11-25 14:00, submit the link.
 - [x] Training/evaluation infrastructure for delay, cancellation and hourly activity (2026-11-18). Files: `src/sources.py`, `features.py`, `estimators.py`, `train.py`, `predict.py`.
   - Chronological split, with the profile computed from training days only.
   - Gate: a model is used only if the 95% paired-bootstrap Brier gain is above 0 AND its ROC-AUC beats the best baseline.
