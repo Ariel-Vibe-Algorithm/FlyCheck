@@ -13,6 +13,21 @@ When you book a flight from TLV you can compare price, airline and departure tim
 
 FlyCheck answers these questions from historical flight records, a machine-learning model and interactive charts. It is decision support, not a live flight tracker, and it never guarantees what will happen to a specific flight.
 
+## Simplified app design
+
+**[Open the simplified FlyCheck page](https://claude.ai/artifact/Cb6JECwreqzy6hxNtkR1e8)** (public link). The source is in [`docs/app_artifact.html`](docs/app_artifact.html).
+
+It is a simpler, user-facing version of the app design, in a liquid-glass style with airplane animations. Each question gets one plain answer, and the numbers behind it are one tap away. It has four pages:
+
+| Page | What it answers |
+|---|---|
+| **Check a flight** | "Will it leave on time?": how many in 10 of the airline's flights left 30+ min late. "How crowded will the airport be?": Quiet / Moderate / Busy when you arrive |
+| **Compare** | The same two answers for several flights side by side, with an optional price |
+| **Airport tips** | When to arrive, terminals, parking, getting there, carry-on, lounges |
+| **About the data** | Key numbers and charts; sources, limitations, models and cleaning steps collapsed below |
+
+The delay answer uses the airline's historical rate on the airport board, the best baseline in `models/metrics.json`. With fewer than 10 departures for the airline, it uses the rate of all flights and says so. No model predictions are shown. To rebuild the page from the current processed data, run `python docs/artifact/build.py`. It fills [`docs/artifact/template.html`](docs/artifact/template.html).
+
 ## App prototype
 
 **[Open the interactive prototype](https://claude.ai/artifact/P39yWMPVP7GJLMZgTsXeL4?sk=TCwr40dUzM0DzY7Z0TZDjA#analyze)** (public link). The source is also in [`docs/app_prototype.html`](docs/app_prototype.html).
