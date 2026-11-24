@@ -1,0 +1,744 @@
+<title>FlyCheck</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@500;600&family=Manrope:wght@400;500;600;700;800&family=Sora:wght@500;600;700&display=swap">
+<style>
+/* Layout: an open sky with drifting clouds; frosted-glass panels float over it. One question per card, plain answers first, numbers on request. */
+:root{
+  --sky-top:#8FBFEF; --sky-mid:#C9DFF5; --sky-low:#F3E6DC;
+  --glass:rgba(255,255,255,.40); --glass-strong:rgba(255,255,255,.66); --glass-edge:rgba(255,255,255,.78);
+  --glass-hi:rgba(255,255,255,.95); --sheen:rgba(255,255,255,.55); --shadow:rgba(28,58,110,.30);
+  --ink:#0C1F3F; --muted:#43597A; --line:rgba(12,31,63,.12);
+  --accent:#1D58D6; --on-accent:#FFFFFF; --amber:#EE9B1E; --bar:rgba(29,88,214,.20);
+  --ok:#1C8350; --warn:#AD6C05; --bad:#BE3A2A;
+  --cloud-a:.78; --star-a:0; --plane:#24457A; --trail:255,255,255;
+  --f-display:"Sora","Segoe UI",system-ui,sans-serif;
+  --f-body:"Manrope",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"JetBrains Mono",ui-monospace,Consolas,monospace;
+  --r:24px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --sky-top:#040A1C; --sky-mid:#0C1A3C; --sky-low:#26305A;
+  --glass:rgba(20,32,66,.42); --glass-strong:rgba(44,60,104,.70); --glass-edge:rgba(255,255,255,.14);
+  --glass-hi:rgba(255,255,255,.20); --sheen:rgba(255,255,255,.07); --shadow:rgba(0,0,0,.55);
+  --ink:#E9F0FC; --muted:#A0B1CE; --line:rgba(233,240,252,.13);
+  --accent:#86ADFF; --on-accent:#0B1430; --amber:#F6B650; --bar:rgba(134,173,255,.26);
+  --ok:#5ECC93; --warn:#EDB54E; --bad:#F2806F;
+  --cloud-a:.09; --star-a:.9; --plane:#C9D8F5; --trail:200,215,245; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --sky-top:#040A1C; --sky-mid:#0C1A3C; --sky-low:#26305A;
+  --glass:rgba(20,32,66,.42); --glass-strong:rgba(44,60,104,.70); --glass-edge:rgba(255,255,255,.14);
+  --glass-hi:rgba(255,255,255,.20); --sheen:rgba(255,255,255,.07); --shadow:rgba(0,0,0,.55);
+  --ink:#E9F0FC; --muted:#A0B1CE; --line:rgba(233,240,252,.13);
+  --accent:#86ADFF; --on-accent:#0B1430; --amber:#F6B650; --bar:rgba(134,173,255,.26);
+  --ok:#5ECC93; --warn:#EDB54E; --bad:#F2806F;
+  --cloud-a:.09; --star-a:.9; --plane:#C9D8F5; --trail:200,215,245; color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--sky-low);color:var(--ink);font-family:var(--f-body);font-size:15px;line-height:1.55}
+a{color:var(--accent);text-underline-offset:3px}
+.sky{position:fixed;inset:0;z-index:0;pointer-events:none;background:linear-gradient(180deg,var(--sky-top) 0%,var(--sky-mid) 58%,var(--sky-low) 100%)}
+#sky{position:fixed;inset:0;width:100%;height:100%;z-index:0;pointer-events:none}
+.wrap{position:relative;z-index:1;max-width:1120px;margin:0 auto;padding-block:18px 56px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));display:flex;flex-direction:column;gap:18px}
+
+.glass{position:relative;background:linear-gradient(150deg,var(--sheen),transparent 45%),var(--glass);-webkit-backdrop-filter:blur(22px) saturate(170%);backdrop-filter:blur(22px) saturate(170%);border:1px solid var(--glass-edge);border-radius:var(--r);box-shadow:inset 0 1px 0 var(--glass-hi),0 20px 44px -24px var(--shadow)}
+
+/* header */
+.top{display:flex;align-items:center;justify-content:space-between;gap:14px;padding:8px 8px 8px 16px;border-radius:999px}
+.brand{display:flex;align-items:center;gap:10px;color:var(--ink);text-decoration:none;min-width:0}
+.logo{width:34px;height:34px;flex:none;display:grid;place-items:center;border-radius:50%;background:var(--accent);color:var(--on-accent)}
+.logo svg{width:20px;height:20px;transform:rotate(45deg)}
+.brand b{font-family:var(--f-display);font-weight:700;font-size:19px;letter-spacing:-.01em;display:block;line-height:1.1}
+.brand small{display:block;color:var(--muted);font-size:12px;font-weight:600;letter-spacing:.02em}
+.seg{position:relative;display:flex;gap:2px;padding:4px;border-radius:999px;background:var(--line);overflow-x:auto;scrollbar-width:none;min-width:0}
+.seg::-webkit-scrollbar{display:none}
+.seg a{position:relative;z-index:1;color:var(--muted);text-decoration:none;font-weight:700;font-size:14px;padding:8px 15px;border-radius:999px;white-space:nowrap;transition:color .25s}
+.seg a:hover,.seg a[aria-current="page"]{color:var(--ink)}
+.ind{position:absolute;top:4px;bottom:4px;left:0;width:0;border-radius:999px;background:var(--glass-strong);box-shadow:inset 0 1px 0 var(--glass-hi),0 6px 16px -6px var(--shadow);transition:transform .55s cubic-bezier(.34,1.35,.5,1),width .55s cubic-bezier(.34,1.35,.5,1)}
+
+/* type */
+h1{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,4.2vw,44px);line-height:1.06;letter-spacing:-.025em;margin:0;text-wrap:balance}
+h2{font-family:var(--f-display);font-weight:600;font-size:19px;letter-spacing:-.01em;margin:0;text-wrap:balance}
+.eyebrow{font-size:12px;font-weight:800;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.lede{color:var(--muted);margin:0;max-width:60ch}
+.note{font-size:12.5px;color:var(--muted);margin:0}
+.big{font-family:var(--f-display);font-weight:600;font-size:40px;line-height:1;letter-spacing:-.03em;font-variant-numeric:tabular-nums}
+.code{font-family:var(--f-mono);font-weight:600;font-size:12.5px;padding:2px 7px;border-radius:7px;background:var(--line);white-space:nowrap}
+
+/* views */
+.view{display:flex;flex-direction:column;gap:18px}
+@media (prefers-reduced-motion:no-preference){.view:not([hidden]){animation:rise .5s cubic-bezier(.2,.8,.2,1)}}
+@keyframes rise{from{transform:translateY(10px);opacity:.35}to{transform:none;opacity:1}}
+.card{padding:22px 24px;min-width:0;display:flex;flex-direction:column;gap:12px}
+.grid{display:grid;gap:18px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+.between{justify-content:space-between}
+
+/* hero + form */
+.hero{display:grid;grid-template-columns:minmax(0,1.05fr) minmax(0,1fr);gap:26px;padding:26px}
+.hero-l{display:flex;flex-direction:column;gap:14px;min-width:0}
+.fields{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+label{display:flex;flex-direction:column;gap:5px;font-size:12.5px;font-weight:700;color:var(--muted);min-width:0}
+input,select{font:inherit;font-size:15px;font-weight:600;color:var(--ink);background:var(--glass-strong);border:1px solid var(--glass-edge);border-radius:14px;padding:10px 12px;width:100%;min-width:0;box-shadow:inset 0 1px 2px var(--line)}
+input:focus-visible,select:focus-visible,button:focus-visible,a:focus-visible,summary:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+button{font:inherit;cursor:pointer}
+.btn{font-weight:700;font-size:14.5px;color:var(--on-accent);background:var(--accent);border:0;border-radius:999px;padding:11px 18px;box-shadow:0 8px 20px -10px var(--accent);transition:transform .15s}
+.btn:hover{transform:translateY(-1px)}
+.btn.ghost{background:transparent;color:var(--muted);border:1px solid var(--line);box-shadow:none;padding:5px 11px;font-size:12.5px}
+.route{display:flex;flex-direction:column;gap:12px;min-width:0;border-radius:20px;padding:16px;background:var(--glass);border:1px solid var(--glass-edge)}
+.route svg{width:100%;height:auto;display:block}
+.route .arc{fill:none;stroke:var(--muted);stroke-width:1.6;stroke-dasharray:3 7;stroke-linecap:round;opacity:.7}
+.route .port{fill:var(--accent)} .route .halo{fill:var(--accent);opacity:.18}
+.route .iata{font-family:var(--f-mono);font-weight:600;font-size:20px;fill:var(--ink)}
+.route .rplane{fill:var(--ink)}
+.legs{display:grid;grid-template-columns:minmax(0,1fr) auto minmax(0,1fr);gap:8px;align-items:center}
+.leg{display:flex;flex-direction:column;gap:1px;min-width:0}
+.leg:last-child{text-align:right}
+.leg .t{font-family:var(--f-mono);font-weight:600;font-size:22px;letter-spacing:-.02em}
+.leg .s{font-size:12px;color:var(--muted);font-weight:600}
+.gap{font-size:12px;font-weight:700;color:var(--muted);padding:3px 9px;border-radius:999px;border:1px dashed var(--line);white-space:nowrap}
+.leadrow{flex-direction:row;flex-wrap:wrap;align-items:center;gap:8px;font-size:13px;padding-top:10px;border-top:1px solid var(--line)}
+.leadrow select{width:auto;padding:6px 10px;font-size:13.5px;border-radius:10px}
+
+/* answers */
+.answer{gap:14px}
+.verdict{font-family:var(--f-display);font-weight:600;font-size:clamp(28px,3.6vw,36px);line-height:1.05;letter-spacing:-.02em;color:var(--c)}
+.say{margin:0;font-size:17px;line-height:1.45}
+.say b{font-weight:800}
+.lv-low{--c:var(--ok)} .lv-medium{--c:var(--warn)} .lv-high{--c:var(--bad)}
+.pill{display:inline-flex;align-items:center;gap:6px;font-weight:800;font-size:12.5px;padding:4px 11px;border-radius:999px;color:var(--c);background:color-mix(in srgb,var(--c) 14%,transparent);border:1px solid color-mix(in srgb,var(--c) 35%,transparent);white-space:nowrap}
+.pill::before{content:"";width:7px;height:7px;border-radius:50%;background:currentColor}
+.planes{display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:6px;max-width:420px}
+.planes svg{width:100%;aspect-ratio:1;fill:color-mix(in srgb,var(--accent) 30%,transparent);transform:rotate(90deg);transition:fill .45s,transform .6s cubic-bezier(.34,1.4,.5,1)}
+.planes svg.late{fill:var(--amber);transform:rotate(90deg) translateX(3px)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:12.5px;color:var(--muted);font-weight:600}
+.sw{display:inline-block;width:11px;height:11px;border-radius:4px;margin-right:6px;vertical-align:-1px}
+.gauge{width:100%;max-width:280px;height:auto;align-self:center;display:block}
+.gauge .z{fill:none;stroke-width:10;stroke-linecap:round}
+.gauge .z0{stroke:var(--ok)} .gauge .z1{stroke:var(--warn)} .gauge .z2{stroke:var(--bad)}
+.gauge .tk{font-size:11px;font-weight:700;fill:var(--muted);font-family:var(--f-body)}
+.gauge .sc{font-family:var(--f-display);font-weight:600;font-size:30px;fill:var(--c);letter-spacing:-.02em}
+.gauge .needle{fill:var(--ink);transform-origin:110px 112px;transition:transform 1.1s cubic-bezier(.34,1.2,.5,1)}
+
+/* more (details) */
+details.more{border-radius:20px}
+details.more>summary{list-style:none;cursor:pointer;display:flex;align-items:center;justify-content:space-between;gap:12px;padding:16px 22px;font-weight:700}
+details.more>summary::-webkit-details-marker{display:none}
+details.more>summary::after{content:"";width:9px;height:9px;border-right:2px solid var(--muted);border-bottom:2px solid var(--muted);transform:rotate(45deg) translateY(-3px);transition:transform .3s;flex:none}
+details.more[open]>summary::after{transform:rotate(225deg) translateY(-3px)}
+details.more>summary small{display:block;font-weight:500;color:var(--muted);font-size:12.5px}
+.more-body{padding:0 22px 22px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.ref{display:flex;flex-direction:column;gap:12px}
+.rr{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 10px;align-items:baseline}
+.rr .rl{font-weight:600;font-size:14px}
+.rr .rl small{display:block;font-weight:500;font-size:12px;color:var(--muted)}
+.rr .rv{font-family:var(--f-mono);font-weight:600;font-size:17px;font-variant-numeric:tabular-nums}
+.track{grid-column:1/-1;height:6px;border-radius:6px;background:var(--line);overflow:hidden}
+.track i{display:block;height:100%;width:0;border-radius:6px;background:var(--accent);transition:width .7s cubic-bezier(.2,.8,.2,1)}
+.kv{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:4px 12px;font-size:14px}
+.kv b{font-family:var(--f-mono);font-variant-numeric:tabular-nums}
+
+/* charts */
+.chartwrap{overflow-x:auto}
+svg text{font-family:var(--f-mono);font-size:10px;fill:var(--muted)}
+svg .vl{fill:var(--ink);font-weight:600}
+.gridl{stroke:var(--line);stroke-width:1}
+.bar{fill:var(--bar);transition:fill .35s}
+.bar.win{fill:var(--amber)} .bar.dep,.bar.strong{fill:var(--accent)}
+.mk{transition:transform .6s cubic-bezier(.34,1.3,.5,1)}
+.mk text{font-family:var(--f-body);font-weight:700;font-size:11px;fill:var(--ink)}
+.mk .ml{stroke:var(--ink);stroke-width:1;stroke-dasharray:2 3}
+.mk .pl{fill:var(--accent)} .mk .pin{fill:var(--amber)}
+@media (prefers-reduced-motion:no-preference){.grow rect.bar{transform-box:fill-box;transform-origin:bottom;animation:grow .7s cubic-bezier(.2,.8,.2,1) backwards}}
+@keyframes grow{from{transform:scaleY(.04)}}
+.area{fill:var(--bar)} .ln{fill:none;stroke:var(--accent);stroke-width:2} .end{fill:var(--amber);stroke:var(--ink);stroke-width:1}
+
+/* tables */
+.tablewrap{overflow-x:auto}
+table{border-collapse:collapse;width:100%;font-size:14px;font-variant-numeric:tabular-nums}
+th,td{text-align:left;padding:10px;border-bottom:1px solid var(--line);white-space:nowrap}
+tr:last-child td{border-bottom:0}
+th{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);font-weight:800}
+th button{all:unset;cursor:pointer}
+th button:focus-visible{outline:2px solid var(--accent)}
+.num{text-align:right}
+.mini{display:inline-block;height:6px;border-radius:6px;background:var(--accent);vertical-align:middle;margin-right:8px;opacity:.75}
+tr.best td{background:color-mix(in srgb,var(--ok) 10%,transparent)}
+.tag{font-size:11px;font-weight:800;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.dots{display:inline-flex;gap:2px;vertical-align:middle;margin-right:8px}
+.dots i{width:6px;height:6px;border-radius:50%;background:color-mix(in srgb,var(--accent) 28%,transparent)}
+.dots i.late{background:var(--amber)}
+
+/* heatmap */
+.heat{display:grid;grid-template-columns:44px repeat(24,minmax(18px,1fr));gap:3px;min-width:600px;font-family:var(--f-mono);font-size:10px;color:var(--muted)}
+.heat i{display:block;aspect-ratio:1;border-radius:5px;background:color-mix(in srgb,var(--accent) var(--p),transparent)}
+.heat span{align-self:center} .heat .hh{text-align:center}
+
+/* about */
+.steps{display:flex;flex-direction:column}
+.step{display:grid;grid-template-columns:28px minmax(0,1fr) auto;gap:2px 12px;padding:11px 0;border-bottom:1px solid var(--line);align-items:baseline}
+.step:last-child{border-bottom:0}
+.step .i{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.step .n{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.step .why{grid-column:2/-1;font-size:12.5px;color:var(--muted)}
+.step.final .n,.step.final span:nth-child(2){color:var(--accent);font-weight:800}
+ul.clean{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.st{font-weight:700;font-size:12.5px}
+.st.done{color:var(--ok)} .st.next{color:var(--warn)} .st.plan{color:var(--muted)}
+.stack{display:flex;flex-direction:column;gap:12px}
+
+footer{font-size:12px;color:var(--muted);text-align:center;padding-top:6px}
+
+@media (max-width:980px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:minmax(0,1fr)}.hero{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:760px){
+  .top{flex-direction:column;align-items:stretch;border-radius:24px;padding:12px}
+  .g2{grid-template-columns:minmax(0,1fr)}
+  .hero{padding:18px} .card{padding:18px}
+  details.more>summary{padding:14px 18px} .more-body{padding:0 18px 18px}
+}
+@media (max-width:440px){.fields{grid-template-columns:minmax(0,1fr)}.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.big{font-size:32px}.leg .t{font-size:18px}.say{font-size:16px}}
+</style>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="pl" viewBox="0 0 24 24"><path d="M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z"/></symbol>
+</svg>
+<div class="sky" aria-hidden="true"></div>
+<canvas id="sky" aria-hidden="true"></canvas>
+
+<div class="wrap">
+  <header class="top glass">
+    <a class="brand" href="#check" aria-label="FlyCheck home">
+      <span class="logo"><svg aria-hidden="true" fill="currentColor"><use href="#pl"/></svg></span>
+      <span><b>FlyCheck</b><small>Know before you book · TLV</small></span>
+    </a>
+    <nav class="seg" aria-label="Pages">
+      <span class="ind" aria-hidden="true"></span>
+      <a href="#check" data-v="check">Check a flight</a>
+      <a href="#compare" data-v="compare">Compare</a>
+      <a href="#guide" data-v="guide">Airport tips</a>
+      <a href="#data" data-v="data">About the data</a>
+    </nav>
+  </header>
+
+  <!-- CHECK A FLIGHT -->
+  <section class="view" data-view="check">
+    <div class="hero glass">
+      <div class="hero-l">
+        <span class="eyebrow">Flying from Ben Gurion</span>
+        <h1>Will my flight leave on time?</h1>
+        <p class="lede">Pick a flight you are thinking of booking. FlyCheck shows how often flights like it left late, and how crowded the airport usually is when you get there.</p>
+        <form class="fields" id="f-an" onsubmit="return false">
+          <label for="a-airline">Airline<select id="a-airline"></select></label>
+          <label for="a-dest">Flying to<select id="a-dest"></select></label>
+          <label for="a-date">Date<input id="a-date" type="date" value="2027-01-14"></label>
+          <label for="a-time">Takeoff time<input id="a-time" type="time" value="18:30" step="300"></label>
+        </form>
+      </div>
+      <div class="route" aria-label="Your trip">
+        <svg viewBox="0 0 340 150" role="img" aria-labelledby="rt-t">
+          <title id="rt-t">Route from Tel Aviv to your destination</title>
+          <path id="rpath" class="arc" d="M34 112 Q170 -6 306 112"/>
+          <circle class="halo" cx="34" cy="112" r="11"/><circle class="port" cx="34" cy="112" r="5"/>
+          <circle class="halo" cx="306" cy="112" r="11"/><circle class="port" cx="306" cy="112" r="5"/>
+          <text class="iata" x="34" y="141" text-anchor="middle">TLV</text>
+          <text class="iata" x="306" y="141" text-anchor="middle" id="r-dest">ATH</text>
+          <g id="rplane" class="rplane"><g transform="rotate(90)"><use href="#pl" x="-12" y="-12" width="24" height="24"/></g>
+            <animateMotion id="r-anim" dur="6.5s" repeatCount="indefinite" rotate="auto" calcMode="spline" keyPoints="0;1" keyTimes="0;1" keySplines=".45 0 .55 1"><mpath href="#rpath"/></animateMotion>
+          </g>
+        </svg>
+        <div class="legs">
+          <div class="leg"><span class="s">Get to the airport</span><span class="t" id="r-arr">15:30</span><span class="s" id="r-arrd">Thu 14 Jan</span></div>
+          <span class="gap" id="r-gap">3 h</span>
+          <div class="leg"><span class="s">Takeoff to <span id="r-city">Athens</span></span><span class="t" id="r-dep">18:30</span><span class="s" id="r-depd">Thu 14 Jan</span></div>
+        </div>
+        <label class="leadrow" for="a-lead">I'll get to the airport
+          <select id="a-lead"><option value="3" selected>3 h</option><option value="3.5">3.5 h</option><option value="4">4 h</option></select>
+          before takeoff. 3 h is the official advice.</label>
+      </div>
+    </div>
+
+    <div class="grid g2">
+      <div class="card glass answer" id="ans-delay">
+        <span class="eyebrow">Will it leave on time?</span>
+        <div class="verdict" id="d-verdict">Often delayed</div>
+        <p class="say" id="d-say"></p>
+        <div class="planes" id="d-planes" aria-hidden="true"></div>
+        <div class="legend"><span><span class="sw" style="background:var(--amber)"></span>Left 30+ min late</span><span><span class="sw" style="background:color-mix(in srgb,var(--accent) 30%,transparent)"></span>Left on time or less late</span></div>
+        <p class="note" id="d-src"></p>
+      </div>
+      <div class="card glass answer">
+        <span class="eyebrow">How crowded will the airport be?</span>
+        <svg class="gauge" viewBox="0 0 220 128" role="img" aria-labelledby="g-t"><title id="g-t">How busy the departure hall usually is when you arrive</title>
+          <g id="g-zones"></g>
+          <text class="tk" x="22" y="127" text-anchor="middle">Quiet</text><text class="tk" x="198" y="127" text-anchor="middle">Busy</text>
+          <text class="sc" x="110" y="108" text-anchor="middle" id="g-word">Busy</text>
+          <g class="needle" id="g-needle"><use href="#pl" x="12" y="100" width="24" height="24"/></g>
+        </svg>
+        <p class="say" id="c-say"></p>
+        <p class="note">Based on the usual flight schedule at that hour, not on live security lines.</p>
+      </div>
+    </div>
+
+    <div class="card glass">
+      <div class="row between"><h2>How busy TLV is through the day</h2><span class="note">Flights leaving per hour, on a typical day</span></div>
+      <div class="chartwrap" id="a-chart"></div>
+      <div class="legend"><span><span class="sw" style="background:var(--amber)"></span>The 3 hours after you arrive: these flights fill the hall with you</span><span><span class="sw" style="background:var(--accent)"></span>Your takeoff hour</span></div>
+    </div>
+
+    <details class="glass more" id="more-check">
+      <summary><span>Show the numbers behind this<small>Sample sizes, other sources, cancellations, and why there is no AI prediction yet</small></span></summary>
+      <div class="more-body">
+        <div class="grid g2">
+          <div class="stack"><span class="eyebrow">Share that left 30+ min late</span><div class="ref" id="a-ref"></div></div>
+          <div class="stack">
+            <span class="eyebrow">Cancellations</span><div id="a-canc"></div>
+            <span class="eyebrow">Why not an AI prediction?</span><p class="note" id="a-model"></p>
+            <p class="note">The crowd level ranks the number of departures scheduled 1–4 hours after you arrive against the other hours of the day. It uses <span id="a-days"></span>.</p>
+          </div>
+        </div>
+      </div>
+    </details>
+  </section>
+
+  <!-- COMPARE -->
+  <section class="view" data-view="compare" hidden>
+    <div class="card glass">
+      <span class="eyebrow">Compare flights</span>
+      <h1>Choosing between a few flights?</h1>
+      <p class="lede">Add each option, then tap a column title to sort. FlyCheck does not pick a winner; you decide what matters most.</p>
+      <form class="fields" id="f-cmp" style="grid-template-columns:repeat(auto-fit,minmax(150px,1fr));align-items:end">
+        <label for="c-airline">Airline<select id="c-airline"></select></label>
+        <label for="c-dest">Flying to<select id="c-dest"></select></label>
+        <label for="c-time">Takeoff time<input id="c-time" type="time" value="06:15" step="300"></label>
+        <label for="c-price">Price in ₪ (optional)<input id="c-price" type="number" min="0" step="1" placeholder="e.g. 1450" inputmode="numeric"></label>
+        <button class="btn" type="submit">Add flight</button>
+      </form>
+    </div>
+    <div class="card glass">
+      <div class="row between"><h2>Your options</h2><span class="note">The first three are examples. Remove them or add your own.</span></div>
+      <div class="tablewrap"><table id="c-table"></table></div>
+      <p class="note">“Left late” uses the same past flights as Check a flight. The airport crowd assumes you arrive 3 h before takeoff.</p>
+    </div>
+  </section>
+
+  <!-- GUIDE -->
+  <section class="view" data-view="guide" hidden>
+    <div class="card glass">
+      <span class="eyebrow">Airport tips</span>
+      <h1>Departing from Ben Gurion.</h1>
+      <p class="lede">The basics, with links to the official Israel Airports Authority pages. Checked Nov 18, 2026; details can change.</p>
+    </div>
+    <div class="grid g3">
+      <div class="card glass"><span class="eyebrow">When to arrive</span><div class="big">3 h</div><p class="note">before international flights, per IAA. Domestic flights: 2 h, and no later than 1 h. FlyCheck never suggests arriving later than this.</p><a href="https://www.iaa.gov.il/en/airports/ben-gurion/securitybgn/" target="_blank" rel="noopener">IAA security guidance</a></div>
+      <div class="card glass"><span class="eyebrow">Terminals</span><p style="margin:0">All international arrivals use Terminal 3. Terminal 1 reopened for some international departures on Jul 1, 2026, and some airlines use both.</p><p class="note">Check your terminal on the booking or the airport's flight board.</p></div>
+      <div class="card glass"><span class="eyebrow">Parking</span><div class="kv"><span>Lot 15, open-air</span><b>₪50/day</b><span>Lot 15, covered</span><b>₪90/day</b><span>Short-term</span><b>₪0.5/min</b></div><a href="https://www.iaa.gov.il/en/airports/ben-gurion/parking-at-ben-gurion-airport/" target="_blank" rel="noopener">IAA parking page</a></div>
+      <div class="card glass"><span class="eyebrow">Getting there</span><p style="margin:0">Trains stop at the airport station next to Terminal 3; buses serve Terminals 1 and 3.</p><div class="row"><a href="https://www.iaa.gov.il/en/airports/ben-gurion/directions/train/" target="_blank" rel="noopener">Train</a><a href="https://www.iaa.gov.il/en/airports/ben-gurion/directions/bus/" target="_blank" rel="noopener">Bus</a></div></div>
+      <div class="card glass"><span class="eyebrow">Security &amp; carry-on</span><p style="margin:0">Banned items, lithium batteries and duty-free liquids are covered by the IAA guidance. Liquid limits depend on your airline.</p><a href="https://www.iaa.gov.il/en/airports/ben-gurion/securitybgn/" target="_blank" rel="noopener">What you can carry</a></div>
+      <div class="card glass"><span class="eyebrow">Lounges &amp; accessibility</span><p style="margin:0">Lounges in Terminals 1 and 3, accessibility services, family rooms and VAT refund.</p><div class="row"><a href="https://www.iaa.gov.il/en/airports/ben-gurion/lounges/" target="_blank" rel="noopener">Lounges</a><a href="https://www.iaa.gov.il/en/airports/ben-gurion/accessibility/" target="_blank" rel="noopener">Accessibility</a></div></div>
+    </div>
+  </section>
+
+  <!-- ABOUT THE DATA -->
+  <section class="view" data-view="data" hidden>
+    <div class="card glass">
+      <span class="eyebrow">About the data</span>
+      <h1>Where the answers come from.</h1>
+      <p class="lede">FlyCheck looks at past departures from TLV recorded on the airport's official flight board. It is not a live flight tracker, and the past does not guarantee what your flight will do.</p>
+    </div>
+    <div class="grid g4" id="x-kpis"></div>
+    <div class="grid g2">
+      <div class="card glass"><h2>How late did flights leave?</h2><div class="chartwrap" id="x-dist"></div><p class="note">Minutes after the scheduled time, n = <span id="x-n"></span> departures. The board's time is close to takeoff, not gate departure.</p></div>
+      <div class="card glass"><h2>Late flights by time of day</h2><div class="chartwrap" id="x-hour"></div><p class="note">Share that left 30+ min late, by scheduled takeoff time. Labels show how many flights.</p></div>
+    </div>
+    <div class="grid g2">
+      <div class="card glass"><h2>Airlines</h2><div class="tablewrap"><table id="x-air"></table></div><p class="note">Airlines with at least 10 departures in the data.</p></div>
+      <div class="card glass"><h2>Good to know</h2>
+        <ul class="clean note" id="ab-lim"></ul>
+        <h2>Sources</h2>
+        <ul class="clean note">
+          <li>Israel Airports Authority flight board, archived by The Octopus (odata.org.il), CC BY: Jan 17, Mar 17, Jun 26, Jul 3 2026.</li>
+          <li>One data.gov.il board snapshot (Nov 18, 2026), adding Nov 17–20.</li>
+          <li>Airline statistics from <a href="https://www.tlvflights.com/en/flight-statistics/?range=all" target="_blank" rel="noopener">TLVFlights</a>.</li>
+          <li>Israel Central Bureau of Statistics, price index 121390.</li>
+        </ul>
+      </div>
+    </div>
+
+    <details class="glass more"><summary><span>Destinations<small>The 12 most frequent, with how often they left late</small></span></summary><div class="more-body"><div class="tablewrap"><table id="x-dest"></table></div></div></details>
+    <details class="glass more"><summary><span>A bigger airline sample<small>TLVFlights, <span id="x-tlvn"></span> flights, Dec 2025 – Nov 2026</span></summary><div class="more-body"><div class="tablewrap"><table id="x-tlv"></table></div><p class="note">“30+ min late” is calculated from their 31+ minute buckets. TLVFlights estimates gate time, so its rates are lower than the board's. The airport was closed Feb 11 – May 15, 2026.</p></div></details>
+    <details class="glass more"><summary><span>Busy hours by weekday<small>Scheduled departures per hour, <span id="x-heatn"></span></small></span></summary><div class="more-body"><div class="chartwrap"><div class="heat" id="x-heat"></div></div><p class="note">Each weekday has only one or two days of data, so read this as a shape, not a forecast.</p></div></details>
+    <details class="glass more"><summary><span>Why there is no AI prediction yet<small>Baselines and models tested on the latest days</small></span></summary><div class="more-body"><p class="note" id="x-msplit"></p><div class="tablewrap"><table id="x-models"></table></div><p class="note" id="x-mverdict"></p><div class="tablewrap"><table id="x-act"></table></div></div></details>
+    <details class="glass more"><summary><span>Price of flying abroad<small>A national monthly index, as context only</small></span></summary><div class="more-body"><div class="chartwrap" id="x-cbs"></div><p class="note">Israel CBS price index 121390, Average 2024 = 100. Not a fare forecast: it has no routes or airlines. Since 2023 it has peaked each April and August.</p></div></details>
+    <details class="glass more"><summary><span>How the data was cleaned<small>From <span id="x-raw"></span> board rows to <span id="x-lab"></span> labelled departures</small></span></summary><div class="more-body"><div class="steps" id="ab-steps"></div></div></details>
+    <details class="glass more"><summary><span>Project status<small>Academic MVP, Vibe Coding with Claude, Ariel University, Fall 2026</small></span></summary><div class="more-body"><div class="tablewrap"><table id="ab-status"></table></div></div></details>
+  </section>
+
+  <footer>Flight data: Israel Airports Authority via data.gov.il, archived by The Octopus (odata.org.il), CC BY · Airline statistics: tlvflights.com · Price index: Israel CBS</footer>
+</div>
+
+<script>
+const D = {"report":{"sources":{"odata":{"rows":225500,"malformed_lines_skipped":3},"govil":{"files":1,"rows":1827}},"malformed_lines_skipped":3,"raw_rows":227327,"rows_with_valid_keys":227327,"unique_flight_listings":7507,"physical_flights":5213,"departures":2595,"departures_completed":931,"departures_cancelled":27,"departures_unresolved":1637,"completed_domestic_excluded":41,"completed_suspect_early_excluded":1,"model_scope_departures":889,"flights_by_source":{"odata":4074,"govil":1139},"model_scope_summary":{"n":889,"median_delay_min":31.0,"share_delayed_30":0.5208,"first_day":"2026-01-16","last_day":"2026-11-18","per_day":{"2026-01-16":11,"2026-03-16":8,"2026-03-17":30,"2026-06-25":228,"2026-06-26":12,"2026-07-01":2,"2026-07-02":247,"2026-07-03":196,"2026-11-17":13,"2026-11-18":142}}},"hourly":[6.17,4.75,0.08,1.42,5.75,14.92,14.83,11.5,11.33,9.0,10.58,6.67,6.42,10.42,10.75,12.67,11.83,9.5,6.75,8.0,4.33,3.42,2.5,3.83],"hourly_arr":[8.67,4.83,9.75,8.83,8.25,4.92,4.0,2.25,2.67,5.17,8.58,9.5,10.17,10.83,13.25,11.5,10.75,9.17,7.58,6.42,5.42,5.5,6.92,11.25],"days":["2026-06-25","2026-06-26","2026-06-27","2026-06-28","2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06","2026-11-18","2026-11-19","2026-11-20"],"airlines":[{"code":"LY","name":"El Al Israel Airlines","n":290,"rate":0.455,"med":27.0},{"code":"6H","name":"Israir Airlines","n":128,"rate":0.672,"med":39.5},{"code":"IZ","name":"Arkia Israeli Airlines","n":111,"rate":0.649,"med":42.0},{"code":"BZ","name":"Blue Bird Airways","n":62,"rate":0.79,"med":48.0},{"code":"FZ","name":"Flydubai","n":28,"rate":0.071,"med":11.0},{"code":"U8","name":"Tus Airways","n":26,"rate":0.808,"med":59.5},{"code":"W4","name":"Wizz Air Malta","n":26,"rate":0.577,"med":35.0},{"code":"A3","name":"Aegean Airlines","n":25,"rate":0.24,"med":20.0},{"code":"EY","name":"Etihad Airways","n":21,"rate":0.19,"med":18.0},{"code":"W6","name":"Wizzair","n":20,"rate":0.15,"med":16.0},{"code":"LO","name":"Lot Polish Airlines","n":12,"rate":0.667,"med":41.0},{"code":"ET","name":"Ethiopian Airlines","n":12,"rate":0.167,"med":21.5},{"code":"CY","name":"Cyprus Airways","n":11,"rate":0.455,"med":24.0},{"code":"J2","name":"Azerbaijan Airlines","n":11,"rate":0.364,"med":25.0}],"airAll":[{"code":"LY","name":"El Al Israel Airlines","n":290,"rate":0.455},{"code":"6H","name":"Israir Airlines","n":128,"rate":0.672},{"code":"IZ","name":"Arkia Israeli Airlines","n":111,"rate":0.649},{"code":"BZ","name":"Blue Bird Airways","n":62,"rate":0.79},{"code":"FZ","name":"Flydubai","n":28,"rate":0.071},{"code":"U8","name":"Tus Airways","n":26,"rate":0.808},{"code":"W4","name":"Wizz Air Malta","n":26,"rate":0.577},{"code":"A3","name":"Aegean Airlines","n":25,"rate":0.24},{"code":"EY","name":"Etihad Airways","n":21,"rate":0.19},{"code":"W6","name":"Wizzair","n":20,"rate":0.15},{"code":"ET","name":"Ethiopian Airlines","n":12,"rate":0.167},{"code":"LO","name":"Lot Polish Airlines","n":12,"rate":0.667},{"code":"J2","name":"Azerbaijan Airlines","n":11,"rate":0.364},{"code":"CY","name":"Cyprus Airways","n":11,"rate":0.455},{"code":"LH","name":"Lufthansa","n":9,"rate":0.222},{"code":"OS","name":"Austrian Airlines","n":8,"rate":0.125},{"code":"AZ","name":"Italia Trasporto Aereo","n":7,"rate":0.571},{"code":"WZ","name":"Red Wings Airlines","n":7,"rate":0.714},{"code":"W9","name":"Wizz Uk","n":7,"rate":0.429},{"code":"3E","name":"Electra Airways","n":5,"rate":0.4},{"code":"ENT","name":"Enter Air- E4","n":4,"rate":1.0},{"code":"AF","name":"Air France","n":4,"rate":0.5},{"code":"UA","name":"United Airlines","n":4,"rate":0.25},{"code":"QS","name":"Smartwings","n":4,"rate":0.75},{"code":"UX","name":"Air Europa","n":3,"rate":0.333},{"code":"E2","name":"Air Haifa","n":3,"rate":0.333},{"code":"GQ","name":"Sky Express S.A.","n":3,"rate":1.0},{"code":"RO","name":"Tarom - Romanian Air Transport","n":3,"rate":1.0},{"code":"5F","name":"Flyone","n":3,"rate":0.333},{"code":"B2","name":"Belavia Airline","n":2,"rate":0.5},{"code":"4V","name":"Sky Up Nistru","n":2,"rate":0.5},{"code":"H7","name":"Hisky","n":2,"rate":1.0},{"code":"FB","name":"Bulgaria Air","n":2,"rate":1.0},{"code":"H4","name":"Hisky Europe Srl","n":2,"rate":1.0},{"code":"SN","name":"Brussels Airlines","n":2,"rate":0.0},{"code":"NO","name":"Neos","n":2,"rate":1.0},{"code":"HY","name":"Uzbekistan Air","n":2,"rate":0.0},{"code":"LIL","name":"Fly Lili","n":2,"rate":1.0},{"code":"LX","name":"Swiss Int`L Airlines","n":2,"rate":0.0},{"code":"TO","name":"Transavia France","n":2,"rate":0.0},{"code":"4L","name":"One Click","n":1,"rate":1.0},{"code":"3F","name":"Flyone Armenia Llc","n":1,"rate":1.0},{"code":"DL","name":"Delta Airlines","n":1,"rate":1.0},{"code":"DE","name":"Condor Flugdienst","n":1,"rate":0.0},{"code":"C6","name":"Centrum Air","n":1,"rate":0.0},{"code":"BT","name":"Air Baltic","n":1,"rate":1.0},{"code":"BA","name":"British Airways Plc","n":1,"rate":0.0},{"code":"A4","name":"Azimuth Airlines","n":1,"rate":1.0},{"code":"KL","name":"K.L.M.","n":1,"rate":0.0},{"code":"IB","name":"Iberia","n":1,"rate":1.0}],"byhour":[{"h":0,"n":52,"rate":0.442},{"h":3,"n":106,"rate":0.509},{"h":6,"n":170,"rate":0.418},{"h":9,"n":121,"rate":0.438},{"h":12,"n":132,"rate":0.606},{"h":15,"n":166,"rate":0.554},{"h":18,"n":98,"rate":0.622},{"h":21,"n":44,"rate":0.659}],"dist":{"labels":["early","0-15","15-30","30-60","60-120","120+"],"counts":[11,138,277,266,136,61]},"dests":[{"code":"ATH","city":"Athens","country":"Greece","n":68,"rate":0.647},{"code":"LCA","city":"Larnaca","country":"Cyprus","n":61,"rate":0.525},{"code":"FCO","city":"Rome","country":"Italy","n":34,"rate":0.618},{"code":"BUD","city":"Budapest","country":"Hungary","n":34,"rate":0.529},{"code":"HER","city":"Heraklion","country":"Greece","n":33,"rate":0.515},{"code":"BUS","city":"Batumi","country":"Georgia","n":30,"rate":0.767},{"code":"DXB","city":"Dubai","country":"United Arab Emirates","n":28,"rate":0.071},{"code":"RHO","city":"Rhodes","country":"Greece","n":28,"rate":0.643},{"code":"CDG","city":"Paris","country":"France","n":27,"rate":0.444},{"code":"PRG","city":"Prague","country":"Czech Republic","n":25,"rate":0.52},{"code":"OTP","city":"Bucharest","country":"Romania","n":24,"rate":0.542},{"code":"PFO","city":"Paphos","country":"Cyprus","n":22,"rate":0.545}],"destAll":[{"code":"ATH","city":"Athens","n":68,"rate":0.647},{"code":"LCA","city":"Larnaca","n":61,"rate":0.525},{"code":"FCO","city":"Rome","n":34,"rate":0.618},{"code":"BUD","city":"Budapest","n":34,"rate":0.529},{"code":"HER","city":"Heraklion","n":33,"rate":0.515},{"code":"BUS","city":"Batumi","n":30,"rate":0.767},{"code":"DXB","city":"Dubai","n":28,"rate":0.071},{"code":"RHO","city":"Rhodes","n":28,"rate":0.643},{"code":"CDG","city":"Paris","n":27,"rate":0.444},{"code":"PRG","city":"Prague","n":25,"rate":0.52},{"code":"OTP","city":"Bucharest","n":24,"rate":0.542},{"code":"PFO","city":"Paphos","n":22,"rate":0.545},{"code":"AUH","city":"Abu Dhabi","n":21,"rate":0.19},{"code":"MXP","city":"Milan","n":19,"rate":0.526},{"code":"JFK","city":"New York","n":18,"rate":0.667},{"code":"VIE","city":"Vienna","n":18,"rate":0.278},{"code":"TBS","city":"Tbilisi","n":17,"rate":0.706},{"code":"GYD","city":"Baku","n":16,"rate":0.312},{"code":"LTN","city":"London Luton","n":15,"rate":0.333},{"code":"EWR","city":"Newark","n":14,"rate":0.571},{"code":"BCN","city":"Barcelona","n":14,"rate":0.714},{"code":"WAW","city":"Warsaw","n":13,"rate":0.769},{"code":"BOJ","city":"Bourgas","n":13,"rate":0.615},{"code":"ADD","city":"Addis Ababa","n":13,"rate":0.154},{"code":"BER","city":"Berlin","n":12,"rate":0.417},{"code":"AMS","city":"Amsterdam","n":12,"rate":0.167},{"code":"SOF","city":"Sofia","n":12,"rate":0.25},{"code":"KRK","city":"Krakow","n":11,"rate":0.455},{"code":"MUC","city":"Munich","n":11,"rate":0.364},{"code":"MAD","city":"Madrid","n":11,"rate":0.636},{"code":"TIV","city":"Tivat","n":11,"rate":0.545},{"code":"SKG","city":"Thessaloniki","n":11,"rate":0.909},{"code":"CFU","city":"Corfu","n":11,"rate":0.545},{"code":"TIA","city":"Tirana","n":10,"rate":0.7},{"code":"FRA","city":"Frankfurt","n":10,"rate":0.4},{"code":"RMO","city":"Chisinau","n":10,"rate":0.7},{"code":"BKK","city":"Bangkok","n":10,"rate":0.6},{"code":"ZRH","city":"Zurich","n":9,"rate":0.556},{"code":"LHR","city":"London","n":9,"rate":0.444},{"code":"VAR","city":"Varna","n":7,"rate":1.0},{"code":"JMK","city":"Mykonos","n":7,"rate":0.571},{"code":"MIA","city":"Miami","n":5,"rate":0.4},{"code":"LAX","city":"Los Angeles","n":5,"rate":0.2},{"code":"VNO","city":"Vilnius","n":5,"rate":0.6},{"code":"HKT","city":"Phuket","n":4,"rate":0.5},{"code":"NAP","city":"Naples","n":4,"rate":0.75},{"code":"GVA","city":"Geneva","n":4,"rate":1.0},{"code":"BTS","city":"Bratislava","n":4,"rate":0.5},{"code":"ZIA","city":"Moscow","n":4,"rate":0.75},{"code":"VCE","city":"Venice","n":4,"rate":0.25},{"code":"KGS","city":"Kos","n":3,"rate":0.667},{"code":"LIS","city":"Lisbon","n":3,"rate":1.0},{"code":"BGY","city":"Bergamo","n":3,"rate":1.0},{"code":"BEG","city":"Belgrade","n":3,"rate":0.667},{"code":"AER","city":"Sochi","n":3,"rate":0.667},{"code":"STN","city":"Stansted","n":3,"rate":1.0},{"code":"IBZ","city":"Ibiza","n":3,"rate":0.333},{"code":"NCE","city":"Nice","n":3,"rate":0.667},{"code":"MSQ","city":"Minsk","n":2,"rate":0.5},{"code":"SZG","city":"Salzburg","n":2,"rate":0.5},{"code":"TAS","city":"Tashkent","n":2,"rate":0.0},{"code":"VRN","city":"Verona","n":2,"rate":1.0},{"code":"KTW","city":"Katowice","n":2,"rate":1.0},{"code":"BOS","city":"Boston","n":2,"rate":0.0},{"code":"CAG","city":"Cagliari","n":2,"rate":0.0},{"code":"CPH","city":"Copenhagen","n":2,"rate":0.5},{"code":"BRU","city":"Brussels","n":2,"rate":0.0},{"code":"CHQ","city":"Khania","n":2,"rate":0.0},{"code":"MJT","city":"Lesbos","n":2,"rate":0.5},{"code":"JTR","city":"Santorini","n":2,"rate":0.0},{"code":"ORY","city":"Paris","n":2,"rate":0.0},{"code":"KLX","city":"Kalamata","n":2,"rate":0.5},{"code":"NRT","city":"Tokyo","n":2,"rate":0.5},{"code":"AOK","city":"Karpathos","n":1,"rate":0.0},{"code":"DBV","city":"Dubrovnik","n":1,"rate":0.0},{"code":"CTA","city":"Catania","n":1,"rate":0.0},{"code":"BRI","city":"Bari","n":1,"rate":1.0},{"code":"AGP","city":"Malaga","n":1,"rate":1.0},{"code":"EFL","city":"Kefalonia","n":1,"rate":0.0},{"code":"DUS","city":"Dusseldorf","n":1,"rate":0.0},{"code":"EVN","city":"Yerevan","n":1,"rate":1.0},{"code":"IAD","city":"Washington","n":1,"rate":0.0},{"code":"MRS","city":"Marseille","n":1,"rate":1.0},{"code":"LUZ","city":"Lublin","n":1,"rate":0.0},{"code":"KRR","city":"Krasnodar","n":1,"rate":1.0},{"code":"LGW","city":"London","n":1,"rate":0.0},{"code":"SKD","city":"Samarkand","n":1,"rate":0.0},{"code":"RIX","city":"Riga","n":1,"rate":1.0},{"code":"PVK","city":"Preveza","n":1,"rate":0.0},{"code":"OPO","city":"Porto","n":1,"rate":0.0}],"tlv":[{"code":"LY","name":"El Al","n":29175,"ontime":59.0,"late30":0.256,"canc":0.005},{"code":"6H","name":"Israir","n":13927,"ontime":41.5,"late30":0.415,"canc":0.014},{"code":"IZ","name":"Arkia","n":13841,"ontime":48.6,"late30":0.369,"canc":0.03},{"code":"BZ","name":"Blue Bird Airways","n":6253,"ontime":29.6,"late30":0.576,"canc":0.037},{"code":"FZ","name":"flydubai","n":3793,"ontime":75.3,"late30":0.138,"canc":0.031},{"code":"W4","name":"Wizz Air Malta","n":3374,"ontime":61.7,"late30":0.257,"canc":0.01},{"code":"W6","name":"Wizz Air","n":3171,"ontime":71.8,"late30":0.157,"canc":0.006},{"code":"U8","name":"TUS Airways","n":2639,"ontime":32.5,"late30":0.546,"canc":0.042},{"code":"EY","name":"Etihad","n":2564,"ontime":77.3,"late30":0.109,"canc":0.004},{"code":"A3","name":"Aegean","n":2416,"ontime":66.7,"late30":0.203,"canc":0.005},{"code":"LH","name":"Lufthansa","n":1616,"ontime":64.8,"late30":0.189,"canc":0.026},{"code":"ET","name":"Ethiopian","n":1487,"ontime":76.3,"late30":0.115,"canc":0.0},{"code":"J2","name":"Azerbaijan Airlines","n":1266,"ontime":83.1,"late30":0.113,"canc":0.005},{"code":"LO","name":"LOT Polish","n":1177,"ontime":64.2,"late30":0.215,"canc":0.01},{"code":"OS","name":"Austrian","n":897,"ontime":67.5,"late30":0.186,"canc":0.025}],"total_tlv":100785,"cbs":[{"y":2015,"m":1,"v":84.4},{"y":2015,"m":2,"v":82.8},{"y":2015,"m":3,"v":83.8},{"y":2015,"m":4,"v":86.9},{"y":2015,"m":5,"v":86.0},{"y":2015,"m":6,"v":85.5},{"y":2015,"m":7,"v":87.5},{"y":2015,"m":8,"v":87.6},{"y":2015,"m":9,"v":86.4},{"y":2015,"m":10,"v":83.4},{"y":2015,"m":11,"v":82.0},{"y":2015,"m":12,"v":81.9},{"y":2016,"m":1,"v":82.3},{"y":2016,"m":2,"v":81.8},{"y":2016,"m":3,"v":81.3},{"y":2016,"m":4,"v":83.8},{"y":2016,"m":5,"v":84.4},{"y":2016,"m":6,"v":85.2},{"y":2016,"m":7,"v":87.8},{"y":2016,"m":8,"v":85.9},{"y":2016,"m":9,"v":82.2},{"y":2016,"m":10,"v":83.3},{"y":2016,"m":11,"v":79.1},{"y":2016,"m":12,"v":78.6},{"y":2017,"m":1,"v":78.8},{"y":2017,"m":2,"v":77.6},{"y":2017,"m":3,"v":76.8},{"y":2017,"m":4,"v":80.2},{"y":2017,"m":5,"v":79.3},{"y":2017,"m":6,"v":78.5},{"y":2017,"m":7,"v":82.2},{"y":2017,"m":8,"v":82.6},{"y":2017,"m":9,"v":81.1},{"y":2017,"m":10,"v":80.5},{"y":2017,"m":11,"v":79.3},{"y":2017,"m":12,"v":79.3},{"y":2018,"m":1,"v":79.2},{"y":2018,"m":2,"v":80.6},{"y":2018,"m":3,"v":82.4},{"y":2018,"m":4,"v":83.7},{"y":2018,"m":5,"v":83.8},{"y":2018,"m":6,"v":84.1},{"y":2018,"m":7,"v":86.8},{"y":2018,"m":8,"v":86.8},{"y":2018,"m":9,"v":84.1},{"y":2018,"m":10,"v":83.5},{"y":2018,"m":11,"v":83.0},{"y":2018,"m":12,"v":83.8},{"y":2019,"m":1,"v":83.9},{"y":2019,"m":2,"v":82.8},{"y":2019,"m":3,"v":83.8},{"y":2019,"m":4,"v":86.4},{"y":2019,"m":5,"v":85.8},{"y":2019,"m":6,"v":86.3},{"y":2019,"m":7,"v":86.0},{"y":2019,"m":8,"v":85.0},{"y":2019,"m":9,"v":83.4},{"y":2019,"m":10,"v":83.8},{"y":2019,"m":11,"v":80.7},{"y":2019,"m":12,"v":80.6},{"y":2020,"m":1,"v":80.2},{"y":2020,"m":2,"v":79.5},{"y":2020,"m":3,"v":80.0},{"y":2020,"m":4,"v":79.8},{"y":2020,"m":5,"v":79.5},{"y":2020,"m":6,"v":79.5},{"y":2020,"m":7,"v":79.5},{"y":2020,"m":8,"v":79.5},{"y":2020,"m":9,"v":79.5},{"y":2020,"m":10,"v":79.7},{"y":2020,"m":11,"v":79.4},{"y":2020,"m":12,"v":79.3},{"y":2021,"m":1,"v":79.2},{"y":2021,"m":2,"v":79.5},{"y":2021,"m":3,"v":80.1},{"y":2021,"m":4,"v":80.4},{"y":2021,"m":5,"v":80.7},{"y":2021,"m":6,"v":80.5},{"y":2021,"m":7,"v":84.1},{"y":2021,"m":8,"v":83.1},{"y":2021,"m":9,"v":82.9},{"y":2021,"m":10,"v":76.3},{"y":2021,"m":11,"v":73.7},{"y":2021,"m":12,"v":73.7},{"y":2022,"m":1,"v":73.9},{"y":2022,"m":2,"v":75.3},{"y":2022,"m":3,"v":76.5},{"y":2022,"m":4,"v":81.9},{"y":2022,"m":5,"v":84.4},{"y":2022,"m":6,"v":85.2},{"y":2022,"m":7,"v":92.7},{"y":2022,"m":8,"v":89.2},{"y":2022,"m":9,"v":87.1},{"y":2022,"m":10,"v":89.3},{"y":2022,"m":11,"v":88.2},{"y":2022,"m":12,"v":88.0},{"y":2023,"m":1,"v":88.0},{"y":2023,"m":2,"v":89.7},{"y":2023,"m":3,"v":91.4},{"y":2023,"m":4,"v":99.5},{"y":2023,"m":5,"v":99.8},{"y":2023,"m":6,"v":99.5},{"y":2023,"m":7,"v":101.5},{"y":2023,"m":8,"v":107.9},{"y":2023,"m":9,"v":100.5},{"y":2023,"m":10,"v":102.7},{"y":2023,"m":11,"v":96.9},{"y":2023,"m":12,"v":96.8},{"y":2024,"m":1,"v":93.5},{"y":2024,"m":2,"v":93.8},{"y":2024,"m":3,"v":94.7},{"y":2024,"m":4,"v":105.2},{"y":2024,"m":5,"v":97.4},{"y":2024,"m":6,"v":98.7},{"y":2024,"m":7,"v":98.8},{"y":2024,"m":8,"v":110.1},{"y":2024,"m":9,"v":100.5},{"y":2024,"m":10,"v":108.7},{"y":2024,"m":11,"v":101.3},{"y":2024,"m":12,"v":98.4},{"y":2025,"m":1,"v":95.7},{"y":2025,"m":2,"v":95.2},{"y":2025,"m":3,"v":96.8},{"y":2025,"m":4,"v":112.2},{"y":2025,"m":5,"v":103.3},{"y":2025,"m":6,"v":105.2},{"y":2025,"m":7,"v":109.5},{"y":2025,"m":8,"v":116.9},{"y":2025,"m":9,"v":106.9},{"y":2025,"m":10,"v":109.8},{"y":2025,"m":11,"v":103.6},{"y":2025,"m":12,"v":105.5},{"y":2026,"m":1,"v":96.9},{"y":2026,"m":2,"v":97.8},{"y":2026,"m":3,"v":98.3},{"y":2026,"m":4,"v":109.1},{"y":2026,"m":5,"v":99.0},{"y":2026,"m":6,"v":98.4},{"y":2026,"m":7,"v":105.8},{"y":2026,"m":8,"v":115.3},{"y":2026,"m":9,"v":106.8},{"y":2026,"m":10,"v":101.4}],"heat":{"Sunday":[7.0,5.5,0.0,3.0,11.5,18.0,16.5,15.0,13.5,7.0,10.5,9.5,10.0,14.0,15.0,14.5,15.5,13.5,11.0,14.5,8.0,6.0,5.5,2.5],"Monday":[7.0,5.0,0.0,0.0,9.0,18.0,18.0,19.0,16.0,10.0,10.0,4.0,7.0,15.0,15.0,17.0,17.0,14.0,9.0,12.0,5.0,4.0,2.0,3.0],"Wednesday":[9.0,5.0,0.0,0.0,0.0,15.0,18.0,6.0,7.0,11.0,12.0,6.0,3.0,7.0,4.0,10.0,13.0,7.0,6.0,8.0,1.0,4.0,2.0,8.0],"Thursday":[4.0,5.3,0.0,1.0,7.0,15.3,15.3,12.0,13.7,10.7,11.7,9.7,8.3,13.3,12.0,13.3,14.3,14.0,9.3,9.7,7.3,6.0,3.0,5.7],"Friday":[8.3,5.3,0.3,2.7,5.3,17.3,17.0,11.7,11.3,9.0,12.0,6.0,5.7,8.3,11.7,10.0,11.3,4.0,1.3,2.0,1.0,0.3,0.3,0.7],"Saturday":[3.5,2.0,0.0,0.0,0.0,6.0,6.0,6.0,5.5,7.0,6.5,2.0,2.5,5.0,4.5,13.0,2.0,6.0,6.0,6.0,2.5,1.0,2.5,5.5]},"heat_days":{"Friday":3,"Monday":1,"Saturday":2,"Sunday":2,"Thursday":3,"Wednesday":1},"models":{"delay":{"split":{"train_rows":538,"test_rows":351,"train_days":["2026-01-16","2026-07-02"],"test_days":["2026-07-03","2026-11-17","2026-11-18"],"train_positive_rate":0.5874,"test_positive_rate":0.4188,"train_positives":316,"test_positives":147},"results":{"Majority class":{"accuracy":0.4188,"precision":0.4188,"recall":1.0,"f1":0.5904,"roc_auc":0.5,"brier":0.5812,"confusion":{"tn":0,"fp":204,"fn":0,"tp":147},"kind":"baseline"},"Overall rate":{"accuracy":0.4188,"precision":0.4188,"recall":1.0,"f1":0.5904,"roc_auc":0.5,"brier":0.2718,"confusion":{"tn":0,"fp":204,"fn":0,"tp":147},"kind":"baseline"},"Airline rate (archive)":{"accuracy":0.584,"precision":0.5026,"recall":0.6667,"f1":0.5731,"roc_auc":0.6403,"brier":0.2556,"confusion":{"tn":107,"fp":97,"fn":49,"tp":98},"kind":"baseline"},"Logistic regression":{"accuracy":0.5185,"precision":0.4083,"recall":0.3333,"f1":0.367,"roc_auc":0.516,"brier":0.2873,"confusion":{"tn":133,"fp":71,"fn":98,"tp":49},"kind":"model"},"Random forest":{"accuracy":0.4929,"precision":0.4025,"recall":0.4354,"f1":0.4183,"roc_auc":0.5152,"brier":0.2527,"confusion":{"tn":109,"fp":95,"fn":83,"tp":64},"kind":"model"}},"best_model":"Random forest","best_baseline":"Airline rate (archive)","beats":false,"ready":false,"reason":"No model clearly beats the best baseline (Airline rate (archive): Brier 0.2556, AUC 0.6403). Best model Random forest: Brier 0.2527, AUC 0.5152; Brier gain 95% CI -0.0118 to 0.0180. The app keeps showing historical rates.","ci":[-0.0118,0.018]},"cancellation":{"split":{"train_rows":553,"test_rows":363,"train_days":["2026-01-16","2026-07-02"],"test_days":["2026-07-03","2026-07-04","2026-07-05","2026-11-17","2026-11-18","2026-11-19"],"train_positive_rate":0.0253,"test_positive_rate":0.0331,"train_positives":14,"test_positives":12},"results":{"Majority class":{"accuracy":0.9669,"precision":0.0,"recall":0.0,"f1":0.0,"roc_auc":0.5,"brier":0.0331,"confusion":{"tn":351,"fp":0,"fn":12,"tp":0},"kind":"baseline"},"Overall rate":{"accuracy":0.9669,"precision":0.0,"recall":0.0,"f1":0.0,"roc_auc":0.5,"brier":0.032,"confusion":{"tn":351,"fp":0,"fn":12,"tp":0},"kind":"baseline"},"Airline rate (archive)":{"accuracy":0.9669,"precision":0.0,"recall":0.0,"f1":0.0,"roc_auc":0.6823,"brier":0.0317,"confusion":{"tn":351,"fp":0,"fn":12,"tp":0},"kind":"baseline"},"Airline rate (TLVFlights)":{"accuracy":0.9669,"precision":0.0,"recall":0.0,"f1":0.0,"roc_auc":0.7727,"brier":0.0314,"confusion":{"tn":351,"fp":0,"fn":12,"tp":0},"kind":"baseline"}},"best_model":null,"best_baseline":"Airline rate (TLVFlights)","beats":false,"ready":false,"reason":"Not enough data for a model: 553 train / 363 test rows, 14 / 12 positives (need >= 300 / 100 rows and >= 50 / 10 positives). Baselines only.","ci":null},"activity":{"split":{"train_days":["2026-06-25","2026-06-26","2026-06-27","2026-06-28","2026-07-02","2026-07-03","2026-07-04","2026-07-05","2026-07-06"],"test_days":["2026-11-18","2026-11-19","2026-11-20"]},"results":{"Hourly mean":{"mae":3.421,"kind":"baseline"},"Weekday-hour mean":{"mae":3.486,"kind":"baseline"},"Random forest":{"mae":4.149,"kind":"model"}},"best_model":"Random forest","best_baseline":"Hourly mean","beats":false,"ready":false,"reason":"Random forest does not beat Hourly mean on test MAE; the app keeps the historical profile.","ci":null}},"trained":"2026-11-18 19:00","data_span":{"flights":5213,"sources":{"odata":4074,"govil":1139},"first_day":"2026-01-16","last_day":"2026-11-21"}};
+const $ = s => document.querySelector(s);
+const pct = x => x == null ? "—" : Math.round(x * 100) + "%";
+const fmt = n => Number(n).toLocaleString("en-US");
+const p2 = n => String(n).padStart(2, "0");
+const hhmm = m => p2(Math.floor(m / 60)) + ":" + p2(m % 60);
+const MON = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+const WD = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+const WDL = ["Sunday","Monday","Tuesday","Wednesday","Thursday","Friday","Saturday"];
+const REDUCED = matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- lookups (historical only, never a prediction) ---------- */
+const AIR = Object.fromEntries(D.airAll.map(a => [a.code, a]));
+const TLV = Object.fromEntries(D.tlv.map(a => [a.code, a]));
+const DEST = Object.fromEntries(D.destAll.map(d => [d.code, d]));
+const band = h => D.byhour.find(b => b.h === Math.floor(h / 3) * 3);
+const airlineName = c => TLV[c]?.name || AIR[c]?.name || c;
+const airlineOpts = [...new Map([...D.airAll.map(a => [a.code, a.name]), ...D.tlv.map(a => [a.code, a.name])]).entries()]
+  .map(([c]) => [c, airlineName(c)]).sort((a, b) => a[1].localeCompare(b[1]));
+const destOpts = D.destAll.map(d => [d.code, d.city]).sort((a, b) => a[1].localeCompare(b[1]));
+function fill(sel, opts, v){ sel.innerHTML = opts.map(([c, t]) => `<option value="${c}">${t} (${c})</option>`).join(""); sel.value = v; }
+
+/* One delay answer per airline: the airline's own past rate (the project's best baseline), or all flights when we have too few. */
+const OVERALL = {rate: D.report.model_scope_summary.share_delayed_30, n: D.report.model_scope_summary.n};
+const MIN_N = 10;
+function delayInfo(code){
+  const a = AIR[code], name = airlineName(code);
+  if (a && a.n >= MIN_N) return {rate: a.rate, n: a.n, own: true, who: `${name} flights`, src: `Based on ${a.n} ${name} departures from TLV in 2026.`};
+  return {rate: OVERALL.rate, n: OVERALL.n, own: false, who: "flights from TLV", src: `We have ${a ? "only " + a.n : "no"} ${name} departures in the data, so this uses all ${fmt(OVERALL.n)} departures from TLV in 2026.`};
+}
+const tenths = r => Math.round(r * 10);
+const delayVerdict = k => k <= 3 ? ["Usually on time", "low"] : k <= 6 ? ["Often delayed", "medium"] : ["Usually delayed", "high"];
+const CROWD = {low: "Quiet", medium: "Moderate", high: "Busy"};
+
+function dayRanges(days){
+  const ds = days.map(d => new Date(d + "T12:00:00")); const out = []; let s = ds[0], p = ds[0];
+  const push = () => out.push(MON[s.getMonth()] + " " + s.getDate() + (p > s ? (p.getMonth() === s.getMonth() ? "–" + p.getDate() : "–" + MON[p.getMonth()] + " " + p.getDate()) : ""));
+  for (let i = 1; i < ds.length; i++){ if ((ds[i] - p) / 864e5 === 1) p = ds[i]; else { push(); s = p = ds[i]; } }
+  push(); return out.join(", ") + " " + ds[ds.length - 1].getFullYear();
+}
+const shortDays = list => list.map(d => { const x = new Date(d + "T12:00:00"); return MON[x.getMonth()] + " " + x.getDate(); }).join(", ") + " " + list[list.length - 1].slice(0, 4);
+const PROFILE_DAYS = `${D.days.length} complete days of schedule (${dayRanges(D.days)})`;
+
+/* ---------- crowd proxy: departures 1–4 h after airport arrival, ranked among the 24 arrival hours ---------- */
+const WIN = [1, 2, 3];
+const winSum = h => WIN.reduce((s, k) => s + D.hourly[(h + k) % 24], 0);
+const ALLW = Array.from({length: 24}, (_, h) => winSum(h));
+function congestion(depMin, lead){
+  const arr = ((Math.round(depMin - lead * 60)) % 1440 + 1440) % 1440, ah = Math.floor(arr / 60), w = ALLW[ah];
+  const score = Math.round(100 * ALLW.filter(x => x < w).length / 23);
+  return {arr, ah, w, score, level: score < 33 ? "low" : score < 66 ? "medium" : "high", prevDay: arr > depMin, win: WIN.map(k => (ah + k) % 24)};
+}
+
+/* ---------- generic SVG bar chart (one linear scale) ---------- */
+function barChart({values, labels, cls = () => "", valueLabels, H = 200, max, minW = 420, tick = v => Math.round(v)}){
+  const W = Math.max(minW, values.length * 30), pl = 34, pb = 24, pt = 22;
+  const top = max ?? Math.max(...values) * 1.12, bw = (W - pl) / values.length;
+  const y = v => pt + (H - pt - pb) * (1 - v / top);
+  let s = `<svg class="grow" viewBox="0 0 ${W} ${H}" width="100%" style="min-width:${minW}px" role="img">`;
+  [0, top / 2, top].forEach(t => s += `<line class="gridl" x1="${pl}" x2="${W}" y1="${y(t)}" y2="${y(t)}"/><text x="${pl - 6}" y="${y(t) + 3}" text-anchor="end">${tick(t)}</text>`);
+  values.forEach((v, i) => {
+    const x = pl + i * bw + bw * .16, w = bw * .68;
+    s += `<rect class="bar ${cls(i)}" style="animation-delay:${i * 35}ms" x="${x}" y="${y(v)}" width="${w}" height="${Math.max(0, H - pb - y(v))}" rx="4"><title>${labels[i]}: ${valueLabels ? valueLabels[i] : v}</title></rect>`;
+    s += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${labels[i]}</text>`;
+    if (valueLabels) s += `<text class="vl" x="${x + w / 2}" y="${y(v) - 5}" text-anchor="middle">${valueLabels[i]}</text>`;
+  });
+  return s + "</svg>";
+}
+
+/* ---------- CHECK A FLIGHT ---------- */
+const HC = {W: 760, H: 236, pl: 34, pb: 24, pt: 46};
+HC.bw = (HC.W - HC.pl) / 24; HC.top = Math.ceil(Math.max(...D.hourly) / 5) * 5;
+HC.y = v => HC.pt + (HC.H - HC.pt - HC.pb) * (1 - v / HC.top);
+HC.cx = h => HC.pl + h * HC.bw + HC.bw / 2;
+function buildHourly(){
+  const {W, H, pl, pb, y, bw} = HC;
+  let s = `<svg class="grow" viewBox="0 0 ${W} ${H}" width="100%" style="min-width:600px" role="img" aria-label="Average departures per hour on a typical day">`;
+  [0, HC.top / 2, HC.top].forEach(t => s += `<line class="gridl" x1="${pl}" x2="${W}" y1="${y(t)}" y2="${y(t)}"/><text x="${pl - 6}" y="${y(t) + 3}" text-anchor="end">${+t.toFixed(1)}</text>`);
+  D.hourly.forEach((v, i) => {
+    const x = pl + i * bw + bw * .14, w = bw * .72;
+    s += `<rect id="hb${i}" class="bar" style="animation-delay:${i * 25}ms" x="${x}" y="${y(v)}" width="${w}" height="${H - pb - y(v)}" rx="4"><title>${p2(i)}:00 · about ${v.toFixed(0)} flights leave</title></rect>`;
+    s += `<text x="${x + w / 2}" y="${H - 8}" text-anchor="middle">${p2(i)}</text>`;
+  });
+  s += `<g class="mk" id="mk-arr"><line class="ml" x1="0" x2="0" y1="20" y2="${H - pb}"/><circle class="pin" cx="0" cy="14" r="5"/><text x="8" y="18" id="mk-arr-t">You arrive</text></g>`;
+  s += `<g class="mk" id="mk-dep"><line class="ml" x1="0" x2="0" y1="34" y2="${H - pb}"/><g class="pl" transform="translate(-9 22) rotate(45 9 9)"><use href="#pl" width="18" height="18"/></g><text x="12" y="38" id="mk-dep-t">Takeoff</text></g>`;
+  $("#a-chart").innerHTML = s + "</svg>";
+}
+function arcPath(a0, a1, r = 86){ // 0..100 → semicircle, left to right over the top
+  const pt = s => { const t = Math.PI * (1 - s / 100); return [110 + r * Math.cos(t), 112 - r * Math.sin(t)]; };
+  const [x0, y0] = pt(a0), [x1, y1] = pt(a1);
+  return `M${x0.toFixed(2)} ${y0.toFixed(2)} A${r} ${r} 0 0 1 ${x1.toFixed(2)} ${y1.toFixed(2)}`;
+}
+$("#g-zones").innerHTML = [[0, 30.5, "z0"], [35.5, 63.5, "z1"], [68.5, 100, "z2"]].map(([a, b, c]) => `<path class="z ${c}" d="${arcPath(a, b)}"/>`).join("");
+$("#d-planes").innerHTML = Array.from({length: 10}, (_, i) => `<svg style="transition-delay:${i * 60}ms"><use href="#pl"/></svg>`).join("");
+const fmtDate = d => `${WD[d.getDay()]} ${d.getDate()} ${MON[d.getMonth()]}`;
+
+function renderCheck(){
+  const code = $("#a-airline").value, dest = $("#a-dest").value;
+  const tv = /^\d\d:\d\d$/.test($("#a-time").value) ? $("#a-time").value : "12:00";
+  const [hh, mm] = tv.split(":").map(Number), depMin = hh * 60 + mm, lead = +$("#a-lead").value;
+  const c = congestion(depMin, lead), a = AIR[code], t = TLV[code], d = DEST[dest], b = band(hh), info = delayInfo(code);
+  const day = new Date(($("#a-date").value || "2027-01-14") + "T12:00:00");
+  const aday = new Date(day); if (c.prevDay) aday.setDate(aday.getDate() - 1);
+
+  // trip card
+  $("#r-dest").textContent = dest; $("#r-city").textContent = d ? d.city : dest;
+  $("#r-arr").textContent = hhmm(c.arr); $("#r-dep").textContent = tv;
+  $("#r-arrd").textContent = fmtDate(aday) + (c.prevDay ? " (day before)" : ""); $("#r-depd").textContent = fmtDate(day);
+  $("#r-gap").textContent = lead + " h";
+
+  // answer 1: delays
+  const k = tenths(info.rate), [vText, vLvl] = delayVerdict(k);
+  const v = $("#d-verdict"); v.textContent = vText; v.className = "verdict lv-" + vLvl;
+  $("#d-say").innerHTML = k === 0 ? `Fewer than <b>1 in 10</b> ${info.who} left 30+ minutes late.` : `<b>${k} in 10</b> ${info.who} left 30+ minutes late.`;
+  [...$("#d-planes").children].forEach((p, i) => p.classList.toggle("late", i < k));
+  $("#d-src").textContent = info.src + " Past flights, not a prediction for your flight.";
+
+  // answer 2: crowd
+  const word = CROWD[c.level], g = $("#g-word");
+  g.textContent = word; g.setAttribute("class", "sc lv-" + c.level);
+  $("#g-needle").style.transform = `rotate(${(180 * c.score / 100).toFixed(1)}deg)`;
+  const rel = c.level === "low" ? "fewer than at most times of day" : c.level === "medium" ? "about average for the day" : "more than at most times of day";
+  $("#c-say").innerHTML = `You arrive at <b>${hhmm(c.arr)}</b>${c.prevDay ? " the evening before" : ""}. About <b>${c.w.toFixed(0)} flights</b> usually leave in the next 3 hours, ${rel}.`;
+
+  // chart highlight
+  for (let i = 0; i < 24; i++) $("#hb" + i).setAttribute("class", "bar" + (i === hh ? " dep" : c.win.includes(i) ? " win" : ""));
+  const xa = HC.cx(c.ah), xd = HC.cx(hh), flip = x => x > HC.W - 110;
+  $("#mk-arr").style.transform = `translate(${xa}px,0)`; $("#mk-dep").style.transform = `translate(${xd}px,0)`;
+  const at = $("#mk-arr-t"), dt = $("#mk-dep-t");
+  at.textContent = `You arrive ${hhmm(c.arr)}`; dt.textContent = `Takeoff ${tv}`;
+  at.setAttribute("x", flip(xa) ? -8 : 8); at.setAttribute("text-anchor", flip(xa) ? "end" : "start");
+  dt.setAttribute("x", flip(xd) ? -12 : 12); dt.setAttribute("text-anchor", flip(xd) ? "end" : "start");
+
+  // numbers behind it
+  const rows = [
+    [`${airlineName(code)}, airport flight board`, a ? a.rate : null, a ? `n = ${a.n} departures${a.n < MIN_N ? " · too few to rely on" : ""}` : "no departures in the data"],
+    [`${airlineName(code)}, TLVFlights`, t ? t.late30 : null, t ? `n = ${fmt(t.n)} flights; counts from gate time, so lower` : "not among the 15 largest airlines"],
+    [`All airlines to ${d ? d.city : dest}`, d ? d.rate : null, d ? `n = ${d.n}${d.n < MIN_N ? " · too few to rely on" : ""}` : "no data"],
+    [`All flights ${p2(b.h)}:00–${p2(b.h + 3)}:00`, b.rate, `n = ${b.n}`],
+  ];
+  const ref = $("#a-ref");
+  if (ref.children.length !== rows.length) ref.innerHTML = rows.map(() => `<div class="rr"><div class="rl"><span></span><small></small></div><div class="rv"></div><div class="track"><i></i></div></div>`).join("");
+  rows.forEach(([l, val, n], i) => {
+    const el = ref.children[i];
+    el.querySelector(".rl span").textContent = l; el.querySelector("small").textContent = n;
+    el.querySelector(".rv").textContent = pct(val); el.querySelector("i").style.width = val == null ? "0%" : (val * 100).toFixed(1) + "%";
+  });
+  $("#a-canc").innerHTML = t
+    ? `<div class="kv"><span>${airlineName(code)} cancelled (TLVFlights)</span><b>${(t.canc * 100).toFixed(1)}%</b></div><p class="note">Out of ${fmt(t.n)} flights. Cancellations are rare and mostly follow security events or airline decisions that nobody can foresee at booking.</p>`
+    : `<p class="note">No cancellation history for this airline.</p>`;
+}
+
+/* ---------- COMPARE ---------- */
+let uid = 0;
+let rows = [
+  {id: ++uid, airline: "LY", dest: "FCO", time: "06:15", price: null, ex: true},
+  {id: ++uid, airline: "W6", dest: "FCO", time: "11:40", price: null, ex: true},
+  {id: ++uid, airline: "IZ", dest: "FCO", time: "19:05", price: null, ex: true},
+];
+let sortKey = null, sortDir = 1;
+function metrics(r){
+  const [hh, mm] = r.time.split(":").map(Number), c = congestion(hh * 60 + mm, 3), info = delayInfo(r.airline);
+  return {...r, late: info.rate, own: info.own, n: info.n, cong: c.score, level: c.level, arr: c.arr};
+}
+function renderCompare(){
+  let data = rows.map(metrics);
+  if (sortKey) data.sort((x, y) => { const a = x[sortKey] ?? Infinity, b = y[sortKey] ?? Infinity; return (a > b ? 1 : a < b ? -1 : 0) * sortDir; });
+  const cols = [["airline", "Flight"], ["time", "Takeoff"], ["late", "Left 30+ min late"], ["cong", "Airport when you arrive"], ["price", "Price ₪"]];
+  let h = "<thead><tr>" + cols.map(([k, t]) => `<th class="${k === "late" || k === "price" ? "num" : ""}"><button data-k="${k}">${t}${sortKey === k ? (sortDir > 0 ? " ↑" : " ↓") : ""}</button></th>`).join("") + "<th></th></tr></thead><tbody>";
+  if (!data.length) h += `<tr><td colspan="6" class="note" style="white-space:normal">No flights yet. Add one above to compare it.</td></tr>`;
+  data.forEach(r => {
+    const k = tenths(r.late);
+    h += `<tr><td><b>${airlineName(r.airline)}</b> → ${DEST[r.dest]?.city || r.dest}${r.ex ? ' <span class="tag">example</span>' : ""}</td><td><span class="code">${r.time}</span></td>`;
+    h += `<td class="num"><span class="dots" aria-hidden="true">${Array.from({length: 10}, (_, i) => `<i class="${i < k ? "late" : ""}"></i>`).join("")}</span><b>${k} in 10</b>${r.own ? "" : ' <span class="note">(all airlines)</span>'}</td>`;
+    h += `<td><span class="pill lv-${r.level}">${CROWD[r.level]}</span> <span class="note">at ${hhmm(r.arr)}</span></td><td class="num">${r.price == null ? '<span class="note">—</span>' : fmt(r.price)}</td>`;
+    h += `<td><button class="btn ghost" data-del="${r.id}" aria-label="Remove ${airlineName(r.airline)} ${r.time}">Remove</button></td></tr>`;
+  });
+  $("#c-table").innerHTML = h + "</tbody>";
+}
+$("#c-table").addEventListener("click", e => {
+  const k = e.target.closest("button")?.dataset; if (!k) return;
+  if (k.k){ sortDir = sortKey === k.k ? -sortDir : 1; sortKey = k.k; }
+  if (k.del) rows = rows.filter(r => r.id !== +k.del);
+  renderCompare();
+});
+$("#f-cmp").addEventListener("submit", e => {
+  e.preventDefault();
+  const p = $("#c-price").value, tv = /^\d\d:\d\d$/.test($("#c-time").value) ? $("#c-time").value : "12:00";
+  rows.push({id: ++uid, airline: $("#c-airline").value, dest: $("#c-dest").value, time: tv, price: p === "" ? null : Math.max(0, Math.round(+p))});
+  $("#c-price").value = ""; renderCompare();
+});
+
+/* ---------- ABOUT THE DATA ---------- */
+function renderData(){
+  const s = D.report.model_scope_summary, r = D.report;
+  const k = [[fmt(s.n), "departures", "completed international flights"], [pct(s.share_delayed_30), "left 30+ min late", "of those departures"], [s.median_delay_min + " min", "typical delay", "median, after schedule"], [fmt(r.departures_cancelled), "cancelled", "of " + fmt(r.departures) + " scheduled departures"]];
+  $("#x-kpis").innerHTML = k.map(([v, l, n]) => `<div class="card glass"><span class="eyebrow">${l}</span><div class="big">${v}</div><span class="note">${n}</span></div>`).join("");
+  $("#x-n").textContent = s.n;
+  $("#x-dist").innerHTML = barChart({values: D.dist.counts, labels: D.dist.labels.map(l => l === "early" ? "early" : l + "m"), valueLabels: D.dist.counts, cls: i => i >= 3 ? "strong" : ""});
+  $("#x-hour").innerHTML = barChart({values: D.byhour.map(b => b.rate * 100), labels: D.byhour.map(b => p2(b.h) + "–" + p2(b.h + 3)), valueLabels: D.byhour.map(b => "n=" + b.n), max: 100, tick: v => v + "%", cls: () => "strong"});
+  const maxN = Math.max(...D.airlines.map(a => a.n));
+  $("#x-air").innerHTML = "<thead><tr><th>Airline</th><th class='num'>Flights</th><th class='num'>Left 30+ late</th><th class='num'>Typical delay</th></tr></thead><tbody>" +
+    D.airlines.map(a => `<tr><td>${airlineName(a.code)} <span class="note">${a.code}</span></td><td class="num"><span class="mini" style="width:${Math.max(3, Math.round(48 * a.n / maxN))}px"></span>${a.n}</td><td class="num">${pct(a.rate)}</td><td class="num">${a.med} min</td></tr>`).join("") + "</tbody>";
+  $("#ab-lim").innerHTML = [
+    `The data is small (${fmt(s.n)} departures) and comes from days around the airport closure of Feb 11 – May 15, 2026, so it cannot show seasons.`,
+    "The board's “actual” time is close to takeoff, not when the plane leaves the gate.",
+    "The crowd level comes from the flight schedule. It does not measure security lines or waiting time.",
+    "FlyCheck does not predict ticket prices.",
+    "Always follow your airline's and the airport's advice on when to arrive.",
+  ].map(x => `<li>${x}</li>`).join("");
+  $("#x-dest").innerHTML = "<thead><tr><th>Destination</th><th class='num'>Flights</th><th class='num'>Left 30+ late</th></tr></thead><tbody>" +
+    D.dests.map(d => `<tr><td>${d.city} <span class="note">${d.code}</span></td><td class="num">${d.n}</td><td class="num">${pct(d.rate)}</td></tr>`).join("") + "</tbody>";
+  $("#x-tlvn").textContent = fmt(D.total_tlv);
+  $("#x-tlv").innerHTML = "<thead><tr><th>Airline</th><th class='num'>Flights</th><th class='num'>On time ≤15 min</th><th class='num'>30+ late</th><th class='num'>Cancelled</th></tr></thead><tbody>" +
+    D.tlv.map(a => `<tr><td>${a.name} <span class="note">${a.code}</span></td><td class="num">${fmt(a.n)}</td><td class="num">${a.ontime.toFixed(0)}%</td><td class="num">${pct(a.late30)}</td><td class="num">${(a.canc * 100).toFixed(1)}%</td></tr>`).join("") + "</tbody>";
+  const wk = WDL.filter(w => D.heat[w]), mx = Math.max(...wk.flatMap(w => D.heat[w]));
+  let hm = `<span></span>` + Array.from({length: 24}, (_, i) => `<span class="hh">${i % 3 ? "" : p2(i)}</span>`).join("");
+  wk.forEach(w => { hm += `<span>${w.slice(0, 3)}</span>` + D.heat[w].map((v, i) => `<i style="--p:${(4 + 86 * v / mx).toFixed(0)}%" title="${w} ${p2(i)}:00 · ${v} departures (avg of ${D.heat_days[w]} day${D.heat_days[w] > 1 ? "s" : ""})"></i>`).join(""); });
+  $("#x-heat").innerHTML = hm; $("#x-heatn").textContent = PROFILE_DAYS;
+  const m = D.models.delay, sp = m.split, f3 = v => v == null ? "—" : v.toFixed(3);
+  $("#x-msplit").textContent = `Target: left 30+ min late. Trained on ${fmt(sp.train_rows)} departures up to ${shortDays([sp.train_days[1]])}, tested on the ${fmt(sp.test_rows)} latest (${shortDays(sp.test_days)}).`;
+  $("#x-models").innerHTML = "<thead><tr><th>Method</th><th>Type</th><th class='num'>ROC-AUC ↑</th><th class='num'>Brier ↓</th><th class='num'>F1</th></tr></thead><tbody>" +
+    Object.entries(m.results).map(([n, r]) => `<tr class="${n === m.best_baseline ? "best" : ""}"><td>${n}${n === m.best_baseline ? ' <span class="tag">used in the app</span>' : ""}</td><td class="tag">${r.kind}</td><td class="num">${f3(r.roc_auc)}</td><td class="num">${f3(r.brier)}</td><td class="num">${f3(r.f1)}</td></tr>`).join("") + "</tbody>";
+  $("#x-mverdict").textContent = `A model replaces the baseline only if it is clearly better: its 95% bootstrap Brier improvement must be above zero and its ROC-AUC higher. ${m.best_model}: Brier gain 95% CI ${m.ci[0]} to ${m.ci[1]}, ROC-AUC ${f3(m.results[m.best_model].roc_auc)} vs ${f3(m.results[m.best_baseline].roc_auc)}. So the app shows the airline's past rate.`;
+  const act = D.models.activity;
+  $("#x-act").innerHTML = "<thead><tr><th>Departures per hour</th><th>Type</th><th class='num'>MAE ↓</th></tr></thead><tbody>" +
+    Object.entries(act.results).map(([n, r]) => `<tr class="${n === act.best_baseline ? "best" : ""}"><td>${n}${n === act.best_baseline ? ' <span class="tag">used in the app</span>' : ""}</td><td class="tag">${r.kind}</td><td class="num">${r.mae.toFixed(2)}</td></tr>`).join("") + "</tbody>";
+  $("#x-cbs").innerHTML = lineChart(D.cbs);
+  const rs = r.sources;
+  $("#x-raw").textContent = fmt(r.raw_rows); $("#x-lab").textContent = fmt(r.model_scope_departures);
+  const steps = [
+    ["Raw board rows read", r.raw_rows, `${fmt(rs.odata.rows)} archive + ${fmt(rs.govil.rows)} snapshot rows; ${r.malformed_lines_skipped} truncated lines skipped`],
+    ["Unique flight listings", r.unique_flight_listings, "the latest snapshot of each flight kept"],
+    ["Physical flights", r.physical_flights, "codeshares merged (e.g. AZ 807 + LH 5233 = one flight)"],
+    ["Departures", r.departures, `${fmt(r.departures_cancelled)} cancelled and ${fmt(r.departures_unresolved)} without a final status kept aside`],
+    ["Completed departures", r.departures_completed, `${r.completed_domestic_excluded} domestic and ${r.completed_suspect_early_excluded} likely schedule change (left 127 min “early”) set aside`],
+    ["Labelled departures", r.model_scope_departures, "completed, international, with a trusted delay"],
+  ];
+  $("#ab-steps").innerHTML = steps.map(([t, n, w], i) => `<div class="step${i === steps.length - 1 ? " final" : ""}"><span class="i">${p2(i + 1)}</span><span>${t}</span><span class="n">${fmt(n)}</span><span class="why">${w}</span></div>`).join("");
+  const st = [["Data audit", "Feasibility, schema, coverage", "Nov 18", "Done", "done"], ["Pipeline", "Download, cleaning, tests", "—", "Done", "done"], ["M2", "Analytics dashboard in Streamlit", "Nov 25", "Built · to submit", "next"], ["Models", "Baselines + training for 3 targets (33 tests)", "—", "Built", "done"], ["M3", "Delay model trained, evaluated, integrated", "Dec 16", "Planned", "plan"], ["Deploy", "Streamlit Community Cloud", "Dec 23", "Planned", "plan"], ["Demo", "Five-minute presentation", "Jan 6, 2027", "Planned", "plan"]];
+  $("#ab-status").innerHTML = "<thead><tr><th>Step</th><th>What</th><th>Due</th><th>Status</th></tr></thead><tbody>" + st.map(x => `<tr><td><span class="code">${x[0]}</span></td><td>${x[1]}</td><td>${x[2]}</td><td><span class="st ${x[4]}">${x[3]}</span></td></tr>`).join("") + "</tbody>";
+}
+function lineChart(pts){
+  const W = 900, H = 230, pl = 34, pr = 12, pt = 18, pb = 24;
+  const vs = pts.map(p => p.v), lo = Math.floor(Math.min(...vs) / 10) * 10, hi = Math.ceil(Math.max(...vs) / 10) * 10;
+  const x = i => pl + (W - pl - pr) * i / (pts.length - 1), y = v => pt + (H - pt - pb) * (1 - (v - lo) / (hi - lo));
+  let s = `<svg viewBox="0 0 ${W} ${H}" width="100%" style="min-width:600px" role="img" aria-label="CBS travel price index">`;
+  for (let t = lo; t <= hi; t += 10) s += `<line class="gridl" x1="${pl}" x2="${W - pr}" y1="${y(t)}" y2="${y(t)}"/><text x="${pl - 6}" y="${y(t) + 3}" text-anchor="end">${t}</text>`;
+  pts.forEach((p, i) => { if (p.m === 1) s += `<text x="${x(i)}" y="${H - 7}" text-anchor="middle">${p.y}</text>`; });
+  const path = pts.map((p, i) => `${i ? "L" : "M"}${x(i).toFixed(1)},${y(p.v).toFixed(1)}`).join("");
+  s += `<path class="area" d="${path} L${x(pts.length - 1)},${H - pb} L${pl},${H - pb}Z"/><path class="ln" d="${path}"/>`;
+  const L = pts[pts.length - 1];
+  s += `<circle class="end" cx="${x(pts.length - 1)}" cy="${y(L.v)}" r="4.5"/><text class="vl" x="${x(pts.length - 1) - 8}" y="${y(L.v) - 10}" text-anchor="end">${MON[L.m - 1]} ${L.y}: ${L.v}</text>`;
+  return s + "</svg>";
+}
+
+/* ---------- routing + nav indicator ---------- */
+const VIEWS = ["check", "compare", "guide", "data"];
+const ALIAS = {analyze: "check", explore: "data", about: "data"};
+function moveInd(){
+  const a = document.querySelector('.seg a[aria-current="page"]'), ind = $(".ind"); if (!a) return;
+  ind.style.width = a.offsetWidth + "px"; ind.style.transform = `translateX(${a.offsetLeft}px)`;
+}
+function show(){
+  let v = location.hash.slice(1); v = ALIAS[v] || v; if (!VIEWS.includes(v)) v = "check";
+  document.querySelectorAll("[data-view]").forEach(s => s.hidden = s.dataset.view !== v);
+  document.querySelectorAll(".seg a").forEach(a => a.dataset.v === v ? a.setAttribute("aria-current", "page") : a.removeAttribute("aria-current"));
+  moveInd();
+  document.querySelector('.seg a[aria-current="page"]')?.scrollIntoView({block: "nearest", inline: "nearest"});
+}
+addEventListener("hashchange", show);
+addEventListener("resize", moveInd);
+document.fonts?.ready.then(moveInd);
+
+/* ---------- init ---------- */
+fill($("#a-airline"), airlineOpts, "LY"); fill($("#a-dest"), destOpts, "ATH");
+fill($("#c-airline"), airlineOpts, "LY"); fill($("#c-dest"), destOpts, "FCO");
+$("#a-days").textContent = PROFILE_DAYS;
+{ const m = D.models.delay; $("#a-model").textContent = `We trained machine-learning models and tested them on the latest days (${shortDays(m.split.test_days)}). None was clearly better than simply using the airline's past rate (ROC-AUC ${m.results[m.best_baseline].roc_auc.toFixed(2)} vs ${m.results[m.best_model].roc_auc.toFixed(2)}), so FlyCheck shows that rate. Details: About the data.`; }
+buildHourly();
+["#a-airline", "#a-dest", "#a-date", "#a-time", "#a-lead"].forEach(s => $(s).addEventListener("input", renderCheck));
+renderCheck(); renderCompare(); renderData(); show();
+if (REDUCED){ $("#r-anim")?.remove(); $("#rplane").setAttribute("transform", "translate(170 53)"); }
+
+/* ---------- ambient sky: drifting clouds, stars at night, an occasional plane with a contrail ---------- */
+(function sky(){
+  const cv = $("#sky"), cx = cv.getContext("2d"); if (!cx) return;
+  const PLANE = new Path2D("M21 16v-2l-8-5V3.5a1.5 1.5 0 0 0-3 0V9l-8 5v2l8-2.5V19l-2 1.5V22l3.5-1 3.5 1v-1.5L13 19v-5.5z");
+  let W = 0, H = 0, tok = {}, clouds = [], stars = [], plane = null, nextPlane = 2.5, last = 0, sprites = [];
+  const rnd = (a, b) => a + Math.random() * (b - a);
+  function readTok(){
+    const s = getComputedStyle(document.documentElement), g = n => s.getPropertyValue(n).trim();
+    tok = {cloudA: parseFloat(g("--cloud-a")) || 0, starA: parseFloat(g("--star-a")) || 0, plane: g("--plane") || "#24457A", trail: g("--trail") || "255,255,255"};
+  }
+  function makeSprite(seed){
+    const c = document.createElement("canvas"), w = 320, h = 140; c.width = w; c.height = h; const g = c.getContext("2d");
+    const puffs = 7 + seed * 2;
+    for (let i = 0; i < puffs; i++){
+      const px = 50 + (w - 100) * (i / (puffs - 1)), py = h * .62 - Math.sin(Math.PI * i / (puffs - 1)) * rnd(18, 40), r = rnd(26, 48);
+      const gr = g.createRadialGradient(px, py, 0, px, py, r);
+      gr.addColorStop(0, "rgba(255,255,255,1)"); gr.addColorStop(.6, "rgba(255,255,255,.75)"); gr.addColorStop(1, "rgba(255,255,255,0)");
+      g.fillStyle = gr; g.beginPath(); g.arc(px, py, r, 0, Math.PI * 2); g.fill();
+    }
+    return c;
+  }
+  function size(){
+    const dpr = Math.min(devicePixelRatio || 1, 2); W = innerWidth; H = innerHeight;
+    cv.width = W * dpr; cv.height = H * dpr; cx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    const n = Math.round(Math.min(9, Math.max(4, W / 170)));
+    clouds = Array.from({length: n}, (_, i) => ({x: rnd(-200, W), y: rnd(.04, .78) * H, s: rnd(.55, 1.35), v: rnd(5, 14), k: i % sprites.length}));
+    stars = Array.from({length: Math.round(W * H / 9000)}, () => ({x: rnd(0, W), y: rnd(0, H * .7), r: rnd(.4, 1.3), p: rnd(0, 6.28)}));
+  }
+  function launch(){
+    const ltr = Math.random() < .6, y0 = rnd(.1, .42) * H;
+    plane = {ltr, x: ltr ? -60 : W + 60, y0, y: y0, v: rnd(70, 105), amp: rnd(10, 26), trail: [], t: 0};
+  }
+  function draw(dt, time){
+    cx.clearRect(0, 0, W, H);
+    if (tok.starA > 0) for (const s of stars){ cx.globalAlpha = tok.starA * (.45 + .55 * Math.sin(time / 900 + s.p) ** 2); cx.fillStyle = "#fff"; cx.beginPath(); cx.arc(s.x, s.y, s.r, 0, 6.283); cx.fill(); }
+    cx.globalAlpha = tok.cloudA;
+    for (const c of clouds){
+      c.x += c.v * dt; const sp = sprites[c.k], w = sp.width * c.s, h = sp.height * c.s;
+      if (c.x > W + 20){ c.x = -w - rnd(20, 200); c.y = rnd(.04, .78) * H; }
+      cx.drawImage(sp, c.x, c.y, w, h);
+    }
+    cx.globalAlpha = 1;
+    if (REDUCED) return;
+    nextPlane -= dt;
+    if (!plane && nextPlane <= 0) launch();
+    if (!plane) return;
+    const p = plane; p.t += dt; p.x += (p.ltr ? 1 : -1) * p.v * dt; p.y = p.y0 - Math.sin(p.t * .35) * p.amp - p.t * 3;
+    const off = (p.ltr && p.x > W + 80) || (!p.ltr && p.x < -80);
+    if (!off) p.trail.push({x: p.x, y: p.y, a: 1});
+    for (const q of p.trail) q.a -= dt * .32;
+    p.trail = p.trail.filter(q => q.a > 0);
+    cx.lineCap = "round";
+    for (let i = 1; i < p.trail.length; i++){
+      const a = p.trail[i - 1], b = p.trail[i];
+      cx.strokeStyle = `rgba(${tok.trail},${(b.a * .55).toFixed(3)})`; cx.lineWidth = 1.5 + (1 - b.a) * 5;
+      cx.beginPath(); cx.moveTo(a.x, a.y); cx.lineTo(b.x, b.y); cx.stroke();
+    }
+    if (off){ if (!p.trail.length){ plane = null; nextPlane = rnd(9, 17); } return; }
+    const n = p.trail.length, prev = p.trail[Math.max(0, n - 4)], ang = Math.atan2(p.y - prev.y, p.x - prev.x) || (p.ltr ? 0 : Math.PI);
+    cx.save(); cx.translate(p.x, p.y); cx.rotate(ang + Math.PI / 2); cx.scale(1.35, 1.35); cx.translate(-12, -12);
+    cx.fillStyle = tok.plane; cx.globalAlpha = .85; cx.fill(PLANE); cx.restore(); cx.globalAlpha = 1;
+    if (tok.starA > 0 && Math.sin(time / 160) > .6){ cx.fillStyle = "#ff5a4f"; cx.beginPath(); cx.arc(p.x, p.y, 1.8, 0, 6.283); cx.fill(); }
+  }
+  function loop(t){
+    const dt = Math.min(.05, (t - (last || t)) / 1000); last = t;
+    draw(dt, t);
+    if (!REDUCED) requestAnimationFrame(loop);
+  }
+  sprites = [makeSprite(0), makeSprite(1), makeSprite(2)];
+  readTok(); size();
+  addEventListener("resize", size);
+  matchMedia("(prefers-color-scheme: dark)").addEventListener("change", readTok);
+  new MutationObserver(readTok).observe(document.documentElement, {attributes: true, attributeFilter: ["data-theme"]});
+  document.addEventListener("visibilitychange", () => { last = 0; });
+  requestAnimationFrame(loop);
+})();
+</script>

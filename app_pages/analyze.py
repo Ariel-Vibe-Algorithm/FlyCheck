@@ -13,6 +13,7 @@ flights = C.load_flights()
 scope = analytics.labelled(flights)
 tlv = C.load_tlvflights()
 profile = C.load_profile()
+schedule_days = analytics.complete_schedule_days(flights)
 
 st.title("Analyze a flight")
 st.write("Enter the flight you are thinking of booking. FlyCheck shows how similar flights "
@@ -85,7 +86,7 @@ with right.container(border=True):
     st.write(f"You arrive at **{cong['arrival_time']:%H:%M}**{prev_day} on {day:%a %d %b %Y}. "
              f"About **{cong['window_departures']:.0f}** international departures are usually "
              f"scheduled in the following three hours.")
-    st.caption("A relative activity index (0–100) from 9 days of schedule in Jun–Jul 2026. "
+    st.caption(f"A relative activity index (0–100) from {len(schedule_days)} complete days of schedule. "
                "It is not a queue or waiting-time estimate.")
 
 # Hourly profile chart
@@ -99,8 +100,8 @@ fig.update_layout(height=300, margin=dict(l=10, r=10, t=10, b=10),
 st.subheader("Typical international departures by hour")
 st.plotly_chart(fig, width="stretch")
 st.caption("Yellow: the three hours after you arrive (the congestion window). "
-           "Dark: your departure hour. Average of scheduled departures on 9 complete days "
-           "(Jun 25–28 and Jul 2–6, 2026).")
+           f"Dark: your departure hour. Average of scheduled departures on {len(schedule_days)} complete "
+           "days: " + ", ".join(f"{d:%b %d}" for d in schedule_days) + ".")
 
 with st.container(border=True):
     st.markdown("**Live status · planned**")

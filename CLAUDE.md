@@ -132,6 +132,7 @@ Context:
   - airline rate: 58.4%, AUC 0.64.
   - Logistic regression and random forest reach only AUC ~0.52.
 - **Why the models fail: the data spans only 10 days.** Day-level delay rates swing from 33% to 61% on days with 100+ flights, and the delayed share is 59% in train vs 42% in test. Weekday cannot be separated from date.
+- **Censoring on each source's last day** (found by a teammate 2026-11-21, verified in the notebook). On 2026-11-18, 69% of evening departures have no final status, and 0 of the 9 labelled ones were delayed. 2026-07-03 has only 15 evening flights, 20% delayed, against 77–79% on the complete days. Late flights had not left when logging stopped, so the test days look more on-time than they were. Handle this before M3.
 
 ### How much data is needed
 
@@ -275,13 +276,17 @@ The detailed step-by-step plan with dates is in [PLAN.md](PLAN.md). Keep both fi
 - [ ] Create repository, initial README, app skeleton, UI sketch and M1 pitch; confirm team roles and detailed course rubric.
 - [x] Implement and test cleaning, deduplication, timestamp handling and hourly historical aggregation (2026-11-18).
 - [x] Build M2 dashboard using real data and filters (2026-11-18: `app.py` + `app_pages/`). M2 no longer requires it; it stays for later milestones.
-- [x] M2 EDA notebook `notebooks/eda.ipynb` + `docs/eda_findings.md` (2026-11-24; runs end to end; 33 tests passing).
+- [x] M2 deliverables prepared under the old (dashboard) guidelines (2026-11-21, by a teammate):
+  - README: M2 summary table, Data Card (5 fields), "What we fixed and why", target histogram (`docs/img/target_histogram.png`), team table to fill.
+  - Explore page: insight ("delays build up during the day") and baseline cards.
+  - Pitch script and submission checklist: `docs/M2_pitch.md`, written for presenting from the dashboard.
+  - Clean-venv install verified; 34 tests passing.
+- [x] M2 EDA notebook `notebooks/eda.ipynb` + `docs/eda_findings.md` (2026-11-24; runs end to end).
 - [ ] M2 remaining (see [docs/M2_TASKS.md](docs/M2_TASKS.md)):
-  - README sections: what we fixed and why, y definition, insight + baseline, missing M1 sections;
-  - team table;
-  - a commit from every member;
-  - clean-environment check;
-  - pitch.
+  - README: point to the notebook, y formula note, one agreed insight + baseline, missing M1 sections, team names;
+  - pitch rewritten to present from the notebook;
+  - clean-environment check including the notebook;
+  - a commit from every member.
 - [x] Training/evaluation infrastructure for delay, cancellation and hourly activity (2026-11-18). Files: `src/sources.py`, `features.py`, `estimators.py`, `train.py`, `predict.py`.
   - Chronological split, with the profile computed from training days only.
   - Gate: a model is used only if the 95% paired-bootstrap Brier gain is above 0 AND its ROC-AUC beats the best baseline.
