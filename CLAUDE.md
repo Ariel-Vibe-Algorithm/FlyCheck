@@ -125,6 +125,10 @@ Context:
   - hour 0.26;
   - weekday 0.21 (confounded with date);
   - terminal 0.03 (none).
+- **Insight (the one sentence for README and the notebook):** delays build up during the day.
+  - Before 12:00, 45% of departures are delayed (n=449); from 18:00, 63% (n=142).
+  - Within El Al alone: 32% vs 64%.
+  - On the two complete days only: 48% vs 78%.
 - **Airline delay rates** (airlines with 20+ flights) range from 7% (flydubai) to 81% (TUS); El Al is 46%. Morning (06–11) is 43%, evening (18–23) 63%.
 - **Baselines:**
   - majority class, all rows: 52.1% accuracy;
