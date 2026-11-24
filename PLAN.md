@@ -1,8 +1,8 @@
 # FlyCheck — Step-by-step build plan
 
-Last updated: 2026-11-18. Read [CLAUDE.md](CLAUDE.md) first: it holds the product requirements, the verified data findings (section 4) and the ML rules this plan follows.
+Last updated: 2026-11-24. Read [CLAUDE.md](CLAUDE.md) first: it holds the product requirements, the verified data findings (section 4) and the ML rules this plan follows.
 
-The data constraint shapes the whole plan. We use **only existing datasets**: no self-collected archive. The labelled delay data is small, about 761 completed departures in the open archive, and comes from an unusual 2026 period. So the model is a small, transparent and honestly evaluated "relative risk" model. Each step ends in something that runs.
+The data constraint shapes the whole plan. We use **only existing datasets**: no self-collected archive. The labelled delay data is small, 889 labelled departures from only 10 days after cleaning, and comes from an unusual 2026 period. So the model is a small, transparent and honestly evaluated "relative risk" model. Each step ends in something that runs.
 
 ## Timeline at a glance
 
@@ -10,7 +10,7 @@ The data constraint shapes the whole plan. We use **only existing datasets**: no
 |---|---|---|---|
 | 0. Setup | Nov 18–19 | — | Repo, environment, data snapshots, open questions sent |
 | 1. Data pipeline | Nov 19–22 | M2 | Clean flight table + tests |
-| 2. Analytics dashboard | Nov 22–25 | **M2 (Nov 25)** | Streamlit Explore Data + About pages on real data |
+| 2. Analytics dashboard + EDA notebook | Nov 22–25 | **M2 (Nov 25, 14:00)** | Dashboard built (Nov 18). M2 itself is now a Jupyter EDA notebook (course update Nov 24): `notebooks/eda.ipynb` |
 | 3. Congestion + features | Nov 26–Dec 5 | M3 | Congestion profile/score, feature builders + tests |
 | 4. Delay model | Dec 5–14 | **M3 (Dec 16)** | Trained, evaluated, saved pipeline; Analyze a Flight page |
 | 5. Comparison + guide + extras | Dec 14–20 | Deployment | Compare page, Airport Guide, live-status card, weather, ILS conversion |
@@ -67,6 +67,11 @@ The data constraint shapes the whole plan. We use **only existing datasets**: no
 **Done when:** `python -m pytest` passes and a summary prints the rows per day, the status counts and the class balance.
 
 ## Phase 2 — M2 analytics dashboard (Nov 22–25)
+
+> **Update 2026-11-24:** the course changed M2 to a **Jupyter EDA notebook** instead of a dashboard (see CLAUDE.md section 3 for the rubric). The dashboard below was built on Nov 18 and stays for later milestones.
+>
+> - **Done:** `notebooks/eda.ipynb` covers the four questions (column types, quality, distributions, correlation with a leakage check), with a conclusion under every chart, the insight and the baseline. The conclusions are also in `docs/eda_findings.md`. The notebook runs end to end.
+> - **Remaining M2 work:** split into three parts in [docs/M2_TASKS.md](docs/M2_TASKS.md): (1) notebook, done; (2) README; (3) pitch and a clean-environment check.
 
 `app.py` as a multipage Streamlit app. Pages for later phases show a clear "coming in M3" message and never fake numbers.
 

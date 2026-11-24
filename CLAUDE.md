@@ -42,7 +42,13 @@ Based on the two supplied course presentations (meetings 1 and 2):
 
 - Real problem, identifiable user, accessible data, simple ML component and Streamlit interface connected to the team's domain.
 - M1 (week 3, Nov 4): project definition, GitHub repository, README.md, CLAUDE.md, working app.py skeleton, dataset link and column descriptions, roles, UI sketch, and 3–4 slide / 3-minute pitch. M1 grading: README 40%, team/roles 15%, repository/app 30%, pitch 15%. The detailed M1 instructions on the course website are authoritative and must be checked separately.
-- M2 (week 6, Nov 25): data loading, cleaning and interactive analytics dashboard.
+- M2 (week 6, Nov 25, 14:00): **changed on 2026-11-24: a Jupyter EDA notebook replaces the dashboard** (Streamlit not required for M2; the dashboard returns with the model). Graded from `main` of the team repo in the **Ariel-Vibe-Algorithm** GitHub organization; each member submits the repo link on MoodLearn.
+  - Clean data + documentation, 25%: 300+ rows after cleaning in `data/`; every cleaning decision and its reason in README; the target has both classes; say in README if the target is computed by a formula.
+  - EDA notebook, 35%: four questions (column types, quality, distributions, correlation incl. leakage check), a written conclusion under every chart, conclusions also saved in a project file.
+  - Insight + baseline, 15%: one "we found that..." sentence at the top of the notebook and in README; baseline = most common class and its accuracy (classification).
+  - README + repo, 10%: README (problem, y, data source, what we fixed and why, insight, baseline), notebook runs with Restart & Run All, CLAUDE.md updated, full team table (anyone missing gets no grade), a commit from each member's own GitHub account.
+  - Pitch, 15%: 3 minutes straight from the notebook.
+  - Work split for M2: [docs/M2_TASKS.md](docs/M2_TASKS.md).
 - M3 (week 9, Dec 16): train, evaluate, save and integrate an ML model for inference in the app.
 - Deployment (week 10, Dec 23): Streamlit Community Cloud.
 - Final demo (week 12, Jan 6 2027): five-minute team presentation, defense/questions and peer rating.
@@ -108,6 +114,34 @@ Context:
 - **What "actual" means:** per TLVFlights, the IAA time is close to takeoff, not gate departure. State this as a limitation.
 - **Class balance:** in the OData sample, 56% of completed departures are delayed by 30 minutes or more (median delay 33 min). giladct shows 25%, likely because it uses a different time definition. Do not mix the two.
 
+### What the EDA showed (2026-11-24, [notebooks/eda.ipynb](notebooks/eda.ipynb), details in [docs/eda_findings.md](docs/eda_findings.md))
+
+- **Labelled table:** 889 international departures (OData + one data.gov.il snapshot), 52.1% delayed 30+, median delay 31 min. No duplicates; no missing values in model columns. Check-in fields are missing for all arrivals (structural), not filled.
+- **Leakage:** `delay_minutes`, `updated` (actual time) and `status` reproduce y exactly. Never use them as features. Check-in counters are only known near departure, so they are excluded too.
+- **Signal exists but is weak.** Cramér's V with y:
+  - airline 0.42;
+  - destination 0.42 (inflated: 90 categories, half with fewer than 5 flights);
+  - country 0.32 (mostly mirrors airline);
+  - hour 0.26;
+  - weekday 0.21 (confounded with date);
+  - terminal 0.03 (none).
+- **Airline delay rates** (airlines with 20+ flights) range from 7% (flydubai) to 81% (TUS); El Al is 46%. Morning (06–11) is 43%, evening (18–23) 63%.
+- **Baselines:**
+  - majority class, all rows: 52.1% accuracy;
+  - majority class, chronological split (train up to Jul 2, test Jul 3 + Nov 17–18): 41.9%;
+  - airline rate: 58.4%, AUC 0.64.
+  - Logistic regression and random forest reach only AUC ~0.52.
+- **Why the models fail: the data spans only 10 days.** Day-level delay rates swing from 33% to 61% on days with 100+ flights, and the delayed share is 59% in train vs 42% in test. Weekday cannot be separated from date.
+
+### How much data is needed
+
+- **M2:** 300 clean rows. We have 889. Done.
+- **M3:** the bottleneck is the **number of distinct days**, not rows. Rough estimates (calculated, not tested):
+  - about 100 flights per airline for a ±10 pp (95%) airline rate; today only El Al, Israir and Arkia have that;
+  - 2–3 continuous months so each weekday appears on many dates;
+  - a full year for seasonality.
+- Rank Air (about a year from the same official board) would meet all three. Until it arrives, the airline-rate baseline is the honest output.
+
 ### Data cleaning and feasibility gate
 
 - Download one reproducible snapshot and record source URL, retrieval date, license, date range and row counts.
@@ -147,7 +181,7 @@ Month adds nothing with the current data, since the few covered days give no sea
 - **Cancellations:** too rare (about 1–2%). Show historical rates only.
 - **Fares and queue times:** no data.
 
-**Data size:** with about 761 labelled departures, keep the model small (few features, shallow trees). Present predictions as relative risk from limited 2026 data.
+**Data size:** with 889 labelled departures from only 10 days (after cleaning, OData + one live-board snapshot; see the EDA findings in section 4), keep the model small (few features, shallow trees). Present predictions as relative risk from limited 2026 data.
 
 **Prediction horizon:** the historical model gives the same answer for any future date and has no live information. A real schedule exists only about 3–4 days ahead, on the live board; it may be displayed separately but must not be fed into the model.
 
@@ -240,7 +274,14 @@ The detailed step-by-step plan with dates is in [PLAN.md](PLAN.md). Keep both fi
 - [x] Audit candidate archive and document feasibility, license, schema, coverage and actual-time reliability (2026-11-18; see section 4).
 - [ ] Create repository, initial README, app skeleton, UI sketch and M1 pitch; confirm team roles and detailed course rubric.
 - [x] Implement and test cleaning, deduplication, timestamp handling and hourly historical aggregation (2026-11-18).
-- [x] Build M2 dashboard using real data and filters (2026-11-18: `app.py` + `app_pages/`, 22 tests passing; still to submit).
+- [x] Build M2 dashboard using real data and filters (2026-11-18: `app.py` + `app_pages/`). M2 no longer requires it; it stays for later milestones.
+- [x] M2 EDA notebook `notebooks/eda.ipynb` + `docs/eda_findings.md` (2026-11-24; runs end to end; 33 tests passing).
+- [ ] M2 remaining (see [docs/M2_TASKS.md](docs/M2_TASKS.md)):
+  - README sections: what we fixed and why, y definition, insight + baseline, missing M1 sections;
+  - team table;
+  - a commit from every member;
+  - clean-environment check;
+  - pitch.
 - [x] Training/evaluation infrastructure for delay, cancellation and hourly activity (2026-11-18). Files: `src/sources.py`, `features.py`, `estimators.py`, `train.py`, `predict.py`.
   - Chronological split, with the profile computed from training days only.
   - Gate: a model is used only if the 95% paired-bootstrap Brier gain is above 0 AND its ROC-AUC beats the best baseline.
@@ -268,7 +309,7 @@ Act as a senior Python/ML developer and teaching partner. Prioritize simplicity 
 
 Record only verified facts, and mark uncertain items as such. Never put personal details (addresses, phone numbers, emails) in it. Keep CLAUDE.md, PLAN.md and WORKLOG.md consistent.
 
-**Data audit:** done on 2026-11-18 (section 4). **Next task:** follow [PLAN.md](PLAN.md) from Phase 0. Phase 0 sets up the repo, environment and reproducible download script; Phase 1 builds the data pipeline with tests. Do not build model or UI code ahead of the processed data.
+**Data audit:** done on 2026-11-18 (section 4). Phases 0–2 of [PLAN.md](PLAN.md) are done. **Next task:** finish M2 by 2026-11-25 14:00 following [docs/M2_TASKS.md](docs/M2_TASKS.md). Each part edits only its own files, so team members do not collide. Then go to Phase 3.
 
 ## 9. Current status and open decisions
 
@@ -276,19 +317,29 @@ Record only verified facts, and mark uncertain items as such. Never put personal
 
 - **Product name:** FlyCheck (for an academic project; commercial name/trademark availability is not established).
 - **Features:** flight delay risk, estimated airport congestion at arrival, historical analysis, flight comparison, and an Airport Guide page.
-- **Data:** existing datasets only. OData flydata log (CC BY) is the primary source; TLVFlights aggregates and the CBS price index provide context. The delay target can be constructed (CHPTOL at final status DEPARTED), but only about 761 labelled departures exist.
+- **Data:** existing datasets only. OData flydata log (CC BY) is the primary source; TLVFlights aggregates and the CBS price index provide context. The delay target can be constructed (CHPTOL at final status DEPARTED), but only 889 labelled departures exist after cleaning, from 10 days.
 - **Defaults:** TLV-only departures, 30-minute delay threshold, 3-hour arrival lead time, static dataset, historical congestion proxy, English UI.
 
-**Not done yet:** code, git repository, model, deployment. Only the audit is complete. No accuracy has been established.
+**Done:**
+
+- Data pipeline with tests.
+- Streamlit app (5 pages).
+- Baselines and models for delay, cancellation and activity. No model beats the airline-rate baseline yet.
+- M2 EDA notebook.
+- The repo was moved to the Ariel-Vibe-Algorithm organization (2026-11-24). The local `origin` still points to the old `aviv15616/FlyCheck` URL, which GitHub redirects.
+
+**Not done:** deployment, a model that passes the gate, the remaining M2 items listed in section 7.
 
 **Open:**
 
-- Instructor approval of the small-data scope (and of the US fallback, if it comes to that).
-- Rank Air export request (not sent yet).
-- EUROCONTROL ADRR access (registration in progress).
-- Data decision point: 2026-12-01.
-- Permission from the giladct author.
-- Team composition and roles.
-- The official M2 rubric.
-- Whether M1 was submitted.
-- Timezone spot-check of CHSTOL.
+- **Instructor approval** of the small-data scope. A WhatsApp message asking whether the OData data is enough for now was drafted on 2026-11-23. Whether it was sent and answered is not recorded.
+- **Rank Air:**
+  - The developer replied on 2026-11-23, asking which fields, which period, whether a final row per flight is enough, and what the model predicts.
+  - A reply was drafted: departures (arrivals optional), all available period, one final row per flight, the official column names, and a question on the timezone and the definition of the actual time.
+  - Whether it was sent is not recorded.
+- **EUROCONTROL ADRR:** OneSky access granted 2026-11-21. Not yet downloaded; LLBG coverage not yet verified.
+- **Data decision point:** 2026-12-01.
+- **Permission** from the giladct author.
+- **Team:** names and roles for the README table. Teammates also need write access in the organization: after the transfer, Aviv could not add collaborators, so the organization owner has to grant access.
+- **M1:** whether it was submitted.
+- ~~Timezone spot-check of CHSTOL~~: closed 2026-11-18, Israel local time.
