@@ -1,6 +1,6 @@
 # FlyCheck — Step-by-step build plan
 
-Last updated: 2026-11-24. Read [CLAUDE.md](CLAUDE.md) first: it holds the product requirements, the verified data findings (section 4) and the ML rules this plan follows.
+Last updated: 2026-11-25. Read [CLAUDE.md](CLAUDE.md) first: it holds the product requirements, the verified data findings (section 4) and the ML rules this plan follows.
 
 The data constraint shapes the whole plan. We use **only existing datasets**: no self-collected archive. The labelled delay data is small, 889 labelled departures from only 10 days after cleaning, and comes from an unusual 2026 period. So the model is a small, transparent and honestly evaluated "relative risk" model. Each step ends in something that runs.
 
@@ -71,7 +71,7 @@ The data constraint shapes the whole plan. We use **only existing datasets**: no
 > **Update 2026-11-24:** the course changed M2 to a **Jupyter EDA notebook** instead of a dashboard (see CLAUDE.md section 3 for the rubric). The dashboard below was built on Nov 18 and stays for later milestones.
 >
 > - **Done:** `notebooks/eda.ipynb` covers the four questions (column types, quality, distributions, correlation with a leakage check), with a conclusion under every chart, the insight and the baseline. The conclusions are also in `docs/eda_findings.md`. The notebook runs end to end.
-> - **Remaining M2 work:** split into three parts in [docs/M2_TASKS.md](docs/M2_TASKS.md): (1) notebook, done; (2) README; (3) pitch and a clean-environment check.
+> - **M2 parts 2 and 3, done 2026-11-25** (see [docs/M2_TASKS.md](docs/M2_TASKS.md)): README updated for the notebook (y formula, insight, majority-class baseline, cleaning decisions, M1 sections, team table); pitch rewritten to present from the notebook; clean-environment check (result in WORKLOG, 25.11). Still open: the other members' team-table rows, presenter names and a commit from every member.
 
 `app.py` as a multipage Streamlit app. Pages for later phases show a clear "coming in M3" message and never fake numbers.
 

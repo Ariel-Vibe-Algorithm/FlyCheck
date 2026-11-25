@@ -13,6 +13,28 @@ When you book a flight from TLV you can compare price, airline and departure tim
 
 FlyCheck answers these questions from historical flight records, a machine-learning model and interactive charts. It is decision support, not a live flight tracker, and it never guarantees what will happen to a specific flight.
 
+**Project statement:** Travelers departing from TLV suffer from not knowing, before they book, how likely their flight is to be delayed or how crowded the airport will be when they arrive. We are building FlyCheck, a Streamlit app that uses the official airport flight-board records and a machine-learning model to estimate delay risk and airport activity for a flight they are considering.
+
+### Persona and scenario
+
+> *The persona is fictional, made up to illustrate the target user.*
+
+**Noa, 34, project manager from Rehovot**, flies to Europe for work four or five times a year. She books her own flights, usually choosing between two or three options with similar prices. Last time her evening flight to Berlin left 90 minutes late and she missed a client dinner. Next month she has to be in Berlin by noon. Before paying she opens FlyCheck, enters the 06:00 and 17:30 options, and compares how often each airline and departure time left 30+ minutes late, and how busy the airport usually is when she would arrive. She picks the option that fits her priorities.
+
+### User stories
+
+1. As a traveler considering a flight, I want to enter its published details and see how often similar flights were delayed 30+ minutes, so I can judge the risk before paying.
+2. As a traveler, I want to see how busy the airport is likely to be when I arrive, not just when my flight departs, so I can plan my trip to the airport.
+3. As a traveler comparing several flights, I want to see their delay risk, airport activity and my own price notes side by side, so I can choose by my own priorities.
+
+### Risks and what we do if they happen
+
+| Risk | Type | If it happens |
+|---|---|---|
+| The labelled data is small (889 departures from 10 days) and no model beats the simple airline-rate baseline | Data | We requested a year-long archive of the same official board (Rank Air) and EUROCONTROL research data. Decision point: Dec 1, 2026. Without them, the app shows the honest historical rates and labels them as such, instead of a model that is no better. |
+| A model or feature silently uses information that is only known after the flight (leakage) | Technical | Features are limited to what is known at booking; the actual time, `delay_minutes` and status are excluded and tested. Evaluation is always on later days than training. |
+| The schedule slips (course deadlines, data arriving late) | Schedule | The pipeline already accepts a new source with only a loader, so a late dataset does not force a rewrite. We cut optional extras (weather, live card, price conversion) before core outputs. |
+
 ## Simplified app design
 
 **[Open the simplified FlyCheck page](https://claude.ai/artifact/Cb6JECwreqzy6hxNtkR1e8)** (public link). The source is in [`docs/app_artifact.html`](docs/app_artifact.html).
@@ -49,7 +71,8 @@ The prototype shows the planned app layout. Its historical numbers are real; no 
 | Data audit (feasibility, schema, coverage) | — | ✅ Done (Nov 18) |
 | Data download + cleaning pipeline + tests | — | ✅ Done |
 | App prototype | — | ✅ Done |
-| **M2**: analytics dashboard in Streamlit | Nov 25 | ✅ Ready to submit (see [M2 summary](#m2-data-dashboard-nov-25)) |
+| **M2**: clean data + EDA notebook ([`notebooks/eda.ipynb`](notebooks/eda.ipynb)) | Nov 25 | ✅ Submitted (see [M2 summary](#m2-eda-notebook-nov-25)) |
+| Streamlit analytics dashboard (built for the old M2 guidelines; kept for M3) | — | ✅ Built |
 | Baselines + training/evaluation pipeline for 3 targets | — | ✅ Built (34 tests passing) |
 | **M3**: delay model trained, evaluated, integrated | Dec 16 | Planned |
 | Deployment to Streamlit Community Cloud | Dec 23 | Planned |
@@ -57,25 +80,47 @@ The prototype shows the planned app layout. Its historical numbers are real; no 
 
 The step-by-step plan is in [PLAN.md](PLAN.md). Decisions and progress are logged in [WORKLOG.md](WORKLOG.md), in Hebrew.
 
-## M2: data dashboard (Nov 25)
+## M2: EDA notebook (Nov 25)
+
+**The M2 deliverable is the Jupyter notebook [`notebooks/eda.ipynb`](notebooks/eda.ipynb)** (in Hebrew). It runs from top to bottom with *Restart & Run All*, and its outputs are saved. Every chart has a written conclusion under it, and all the conclusions are also collected in [`docs/eda_findings.md`](docs/eda_findings.md).
 
 | Requirement | What we have | Where |
 |---|---|---|
-| **Clean data**: 300+ rows, Data Card, what we fixed | 889 labelled departures (5,213 flights in total), one row per physical flight | `data/processed/flights.parquet` · [Data Card](#data-card) · [What we fixed and why](#what-we-fixed-and-why) |
-| **EDA page**: 4 metrics, 2 charts, 1 filter | 4 KPIs (departures, share delayed 30+, median delay, cancellations). Charts include the delay histogram, delay by departure time, airlines, and hourly activity. Sidebar filters: airline, destination country, hour, weekday | Streamlit page **Explore data** (`app_pages/explore.py`) |
-| **Insight** | Delays build up during the day (below) | Top of **Explore data** |
-| **Baseline** | The airline's past delay rate: ROC-AUC 0.64, Brier 0.256 on the latest days | Top of **Explore data** and its **Baselines & models** tab |
+| **Clean data**: 300+ rows, both classes, every cleaning decision | 889 labelled departures (5,213 flights in total), one row per physical flight; 52.1% delayed, 47.9% not | `data/processed/flights.parquet` · [Data Card](#data-card) · [What we fixed and why](#what-we-fixed-and-why) · notebook section 0 |
+| **EDA**: the four questions | 1. Column types · 2. Quality: missing values, duplicates, wrong values, outliers · 3. Distributions, including the target's balance · 4. Correlation with y, including a leakage check | Notebook sections 1–4 |
+| **Insight** | Delays build up during the day (below) | Top of the notebook, section 4, this README |
+| **Baseline** | Most common class and its accuracy (below) | Top of the notebook, section 5, this README |
 
-**Insight: delays build up during the day.** Departures scheduled before noon left 30+ minutes late 45% of the time (n = 449). After 18:00 the share was 63% (n = 142). This is not only because of which airlines fly in the evening: El Al alone went from 32% (n = 161) to 64% (n = 42). On the two fully covered days (Jun 25 and Jul 2, 2026) the evening share reached 77–79%. For a traveler who cares about delays, a morning flight is the safer bet.
+### How y is computed
 
-**Baseline M3 must beat.** We tested on the 351 latest departures (Jul 3, Nov 17–18 2026), which were never used for training:
+The target is **computed by a formula** from two measured times on the official board; nobody labelled it by hand:
 
-| Baseline | ROC-AUC | Brier score |
+```text
+delay_minutes = actual departure time − scheduled departure time   (minutes, Israel local time)
+delayed_30    = 1 if delay_minutes ≥ 30, else 0
+```
+
+It is computed only for completed international departures (final status `DEPARTED`). Because y is a function of the actual time, the actual time, `delay_minutes` and the final status are **never used as features**: the notebook checks that each of them reproduces y exactly (leakage). The model may only use what a traveler knows at booking: airline, destination, scheduled hour and weekday.
+
+### Insight
+
+**We found that delays build up during the day.** Departures scheduled before 12:00 left 30+ minutes late 45% of the time (n = 449); from 18:00 the share was 63% (n = 142). This is not only because different airlines fly in the evening: within El Al alone it went from 32% (n = 161) to 64% (n = 42). On the two fully logged days (Jun 25 and Jul 2, 2026) it went from 48% to 78%. For a traveler who cares about delays, a morning flight is usually the safer choice.
+
+Secondary finding: the airline has the strongest link to y (Cramér's V 0.42). Among airlines with 20+ flights, the delay rate ranges from 7% (flydubai) to 81% (TUS); El Al is 46%.
+
+### Baseline
+
+| Baseline | Accuracy | ROC-AUC |
 |---|---|---|
-| Overall rate (52%, the same for every flight) | 0.50 | 0.272 |
-| **Airline's past rate (best baseline)** | **0.64** | **0.256** |
+| **Most common class** ("always delayed"), all 889 departures | **52.1%** | — |
+| **Most common class, chronological split** (train: 538 departures up to Jul 2, 2026; test: 351 departures on Jul 3 and Nov 17–18) | **41.9%** | 0.50 |
+| Airline's delay rate from the training days | 58.4% | 0.64 |
 
-A first logistic regression and random forest did not beat the airline rate: their best ROC-AUC was 0.52. The full table is in `models/metrics.json` and on the dashboard.
+Why the two majority-class numbers differ: on all rows "delayed" is the majority (52.1%). In the chronological split the model learns "delayed" from the training days (59% delayed), but only 41.9% of the test days are delayed, so always predicting "delayed" is right 41.9% of the time. M3 is evaluated on the chronological split, so **41.9% is the minimum to beat and the airline rate (58.4%, ROC-AUC 0.64) is the real target**. A first logistic regression and random forest did not beat it (ROC-AUC ≈ 0.52). Full metrics: `models/metrics.json`.
+
+The test days are biased towards "on time": on the last logged day of each source, many late evening flights had not left yet when logging stopped (notebook section 4). This will be handled before M3.
+
+The Streamlit dashboard built for the earlier M2 guidelines (`python -m streamlit run app.py`, page **Explore data**) shows the same insight and baselines interactively.
 
 ## Data
 
@@ -132,7 +177,14 @@ The pipeline converts every source into one internal flight schema, so a new sou
 2. **Merged codeshares.** One plane sold under several flight numbers (for example AZ 807 + LH 5233) becomes one physical flight (7,507 → 5,213). Otherwise routes with many partner airlines would weigh several times more than they should.
 3. **Labelled only real outcomes, and flagged instead of deleting.** The delay target uses only completed departures with a real departure time. Cancelled flights (27) and flights with no final status (1,637) are kept but left out of the target. Filling them in would invent on-time flights. Domestic flights (41) and the "127 min early" flight are flagged out of scope and counted in `data/processed/cleaning_report.json`.
 
-We also skip and count the 3 truncated CSV lines instead of failing on them.
+4. **Skipped broken lines.** 3 truncated CSV lines are skipped and counted instead of crashing the load, so the rest of the file is still used.
+5. **Removed one impossible departure, kept real outliers.** One flight "left" 127 minutes early, which is almost certainly an unrecorded schedule change, so it is excluded (rule: leaving more than 30 minutes early is suspect). We kept the 11 departures that left up to 21 minutes early and the 30 delays over 3 hours (up to 386 min): their times are consistent, and since y is binary they cannot distort it.
+6. **Removed domestic flights.** The 41 domestic departures (to Israeli airports such as Eilat) are a different product from the international flights FlyCheck covers, so they are flagged out of scope.
+7. **Left structural gaps empty.** Check-in counters and zone are missing in 57% of rows: they are never given for arrivals, and they are only known close to departure. We do not fill them with 0 or an average, and they are not model features. The columns the model uses have no missing values.
+8. **Fixed the time zone.** The board times have no time-zone mark. We checked them against the live board on Nov 18, 2026: they are Israel local time, and all delays are computed in that zone, including flights that cross midnight.
+9. **Checked for duplicates after cleaning.** There are none by (airline, flight number, date).
+
+The notebook shows each of these decisions with its numbers (sections 0 and 2).
 
 ## How to run
 
@@ -146,6 +198,14 @@ python -m src.data_processing    # builds data/processed/flights.parquet + clean
 python -m src.train              # baselines + models for delay, cancellation, airport activity
 python -m pytest                 # runs the tests (pipeline, analytics, models, every app page)
 python -m streamlit run app.py   # opens the app at http://localhost:8501
+```
+
+The M2 notebook needs only the committed processed data (no download or training):
+
+```bash
+jupyter notebook notebooks/eda.ipynb   # then Kernel → Restart & Run All
+# or, headless:
+jupyter nbconvert --to notebook --execute notebooks/eda.ipynb --output /tmp/eda_check.ipynb
 ```
 
 ### Adding a larger dataset
@@ -175,7 +235,15 @@ FlyCheck/
 ├── requirements.txt     pinned dependencies
 ├── app.py               Streamlit entry point (navigation)
 ├── app_pages/           one file per page: analyze, compare, explore, guide, about
+├── notebooks/
+│   └── eda.ipynb            M2 EDA notebook (Hebrew)
 ├── docs/
+│   ├── eda_findings.md      all EDA conclusions (Hebrew)
+│   ├── M2_pitch.md          M2 pitch script (Hebrew)
+│   ├── M2_TASKS.md          M2 work split (Hebrew)
+│   ├── img/                 README images (target histogram)
+│   ├── app_artifact.html    simplified app page
+│   ├── artifact/            build script + template for the simplified page
 │   └── app_prototype.html   interactive app prototype
 ├── src/
 │   ├── download_data.py     reproducible raw-data download
@@ -216,12 +284,14 @@ FlyCheck/
 
 ## Team
 
-| Name | Role | GitHub |
-|---|---|---|
-| *to fill* | Product | |
-| *to fill* | Programmer | |
-| *to fill* | Data | |
-| *to fill* | UI/UX | |
+| Name | Faculty | Role | GitHub |
+|---|---|---|---|
+| Tal Hadary | Computer Science | Data | [countDookim](https://github.com/countDookim) |
+| *to fill* | *to fill* | *to fill* | |
+| *to fill* | *to fill* | *to fill* | |
+| *to fill* | *to fill* | *to fill* | |
+
+Course roles: Product, Programmer, Data, UI/UX.
 
 Every team member commits to this repository (course requirement).
 

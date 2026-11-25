@@ -286,11 +286,11 @@ The detailed step-by-step plan with dates is in [PLAN.md](PLAN.md). Keep both fi
   - Pitch script and submission checklist: `docs/M2_pitch.md`, written for presenting from the dashboard.
   - Clean-venv install verified; 34 tests passing.
 - [x] M2 EDA notebook `notebooks/eda.ipynb` + `docs/eda_findings.md` (2026-11-24; runs end to end).
-- [ ] M2 remaining (see [docs/M2_TASKS.md](docs/M2_TASKS.md)):
-  - README: point to the notebook, y formula note, one agreed insight + baseline, missing M1 sections, team names;
-  - pitch rewritten to present from the notebook;
-  - clean-environment check including the notebook;
-  - a commit from every member.
+- [x] M2 parts 2 and 3 (2026-11-25, [docs/M2_TASKS.md](docs/M2_TASKS.md)):
+  - README: M2 section points to the notebook; y formula and leakage note; insight; majority-class baseline (52.1% all rows, 41.9% chronological) + airline rate; full "What we fixed and why"; M1 sections (project statement, fictional persona, 3 user stories, 3 risks); team table with faculty column.
+  - `docs/M2_pitch.md` rewritten as a 3-minute script from the notebook, with 6 expected questions.
+  - Clean-environment check including the notebook: see WORKLOG 25.11.
+- [ ] M2 still open at submission time: the other team members' rows in the README team table, presenter names in the pitch, and a commit from every member.
 - [x] Training/evaluation infrastructure for delay, cancellation and hourly activity (2026-11-18). Files: `src/sources.py`, `features.py`, `estimators.py`, `train.py`, `predict.py`.
   - Chronological split, with the profile computed from training days only.
   - Gate: a model is used only if the 95% paired-bootstrap Brier gain is above 0 AND its ROC-AUC beats the best baseline.
@@ -318,7 +318,7 @@ Act as a senior Python/ML developer and teaching partner. Prioritize simplicity 
 
 Record only verified facts, and mark uncertain items as such. Never put personal details (addresses, phone numbers, emails) in it. Keep CLAUDE.md, PLAN.md and WORKLOG.md consistent.
 
-**Data audit:** done on 2026-11-18 (section 4). Phases 0–2 of [PLAN.md](PLAN.md) are done. **Next task:** finish M2 by 2026-11-25 14:00 following [docs/M2_TASKS.md](docs/M2_TASKS.md). Each part edits only its own files, so team members do not collide. Then go to Phase 3.
+**Data audit:** done on 2026-11-18 (section 4). Phases 0–2 of [PLAN.md](PLAN.md) are done, and M2 was prepared on 2026-11-25 (section 7). **Next task:** Phase 3 (congestion + features), and handle the last-day censoring before M3.
 
 ## 9. Current status and open decisions
 
@@ -337,7 +337,9 @@ Record only verified facts, and mark uncertain items as such. Never put personal
 - M2 EDA notebook.
 - The repo was moved to the Ariel-Vibe-Algorithm organization (2026-11-24). The local `origin` still points to the old `aviv15616/FlyCheck` URL, which GitHub redirects.
 
-**Not done:** deployment, a model that passes the gate, the remaining M2 items listed in section 7.
+- M2 README and pitch (2026-11-25).
+
+**Not done:** deployment, a model that passes the gate, the open M2 items listed in section 7 (team rows, presenter names, a commit from every member).
 
 **Open:**
 
