@@ -287,7 +287,7 @@ FlyCheck/
 | Name | Faculty | Role | GitHub |
 |---|---|---|---|
 | Tal Hadary | Computer Science | Data | [countDookim](https://github.com/countDookim) |
-| Omer Barak | Mechanical Engineering | Product | |
+| Omer Barak | Mechanical Engineering | Product, UI/UX | |
 | *to fill* | *to fill* | *to fill* | |
 | *to fill* | *to fill* | *to fill* | |
 
