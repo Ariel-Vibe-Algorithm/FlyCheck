@@ -287,7 +287,7 @@ FlyCheck/
 | Name | Faculty | Role | GitHub |
 |---|---|---|---|
 | Tal Hadary | Computer Science | Data | [countDookim](https://github.com/countDookim) |
-| Omer Barak | Mechanical Engineering | Product, UI/UX | |
+| Omer Barak | Mechanical Engineering | Product, UI/UX | [Ombarak15](https://github.com/Ombarak15) |
 | Aviv Neeman | Computer Science | Programmer | [aviv15616](https://github.com/aviv15616) |
 
 Course roles: Product, Programmer, Data, UI/UX.
